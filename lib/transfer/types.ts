@@ -22,6 +22,8 @@ export type Playlist = {
 
 export type AuthState = 'signed_out' | 'signed_in'
 
+import type React from 'react'
+
 export interface ServiceAdapter {
   id: string
   displayName: string
