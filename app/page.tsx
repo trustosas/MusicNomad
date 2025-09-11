@@ -70,11 +70,11 @@ export default function HomePage() {
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex flex-col sm:flex-row gap-3 justify-center">
-              <Button size="lg" className="font-semibold">
-                Get Started
+              <Button asChild size="lg" className="font-semibold">
+                <a href="/transfer">Start Transfer</a>
               </Button>
-              <Button variant="outline" size="lg">
-                View Documentation
+              <Button asChild variant="outline" size="lg">
+                <a href="https://www.builder.io/c/docs/projects" target="_blank" rel="noreferrer">View Documentation</a>
               </Button>
             </div>
 
