@@ -20,6 +20,14 @@ export default function ActionPage() {
     { id: 'amazon', name: 'Amazon Music', enabled: false },
   ]
 
+  const steps: { label: string }[] = [
+    { label: 'Select source' },
+    { label: 'Select destination' },
+    { label: 'Review details' },
+    { label: 'Start transfer' },
+  ]
+  const current = 0
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-950 dark:to-slate-900">
       <div className="container mx-auto px-4 py-16">
@@ -48,48 +56,45 @@ export default function ActionPage() {
 
         {/* Flow widget: step circles */}
         <div className="mx-auto mt-10 max-w-2xl px-2">
-          <ol className="flex items-center justify-between gap-3 text-sm">
-            {[
-              { label: 'Select source' },
-              { label: 'Select destination' },
-              { label: 'Review details' },
-              { label: 'Start transfer' },
-            ].map((s, i, arr) => {
-              const current = 0
-              const state = i < current ? 'complete' : i === current ? 'current' : 'upcoming'
-              return (
-                <li key={s.label} className="flex flex-1 items-center">
-                  {i !== 0 && (
-                    <div
-                      className={[
-                        'mx-2 h-[2px] w-full rounded',
-                        state === 'complete' ? 'bg-[#7c3aed]' : 'bg-slate-300 dark:bg-slate-700',
-                      ].join(' ')}
-                      aria-hidden
-                    />
-                  )}
-                  <div className="flex flex-col items-center text-center">
-                    <div
-                      className={[
-                        'flex h-9 w-9 items-center justify-center rounded-full border text-xs font-medium',
-                        state === 'current'
-                          ? 'bg-[#7c3aed] text-white border-[#7c3aed]'
-                          : state === 'complete'
-                          ? 'bg-[#7c3aed]/10 text-[#7c3aed] border-[#7c3aed]/40'
-                          : 'bg-white/70 text-slate-600 border-slate-300 backdrop-blur-sm dark:bg-slate-900/40 dark:border-slate-700 dark:text-slate-300',
-                      ].join(' ')}
-                      aria-current={state === 'current' ? 'step' : undefined}
-                    >
-                      {i + 1}
+          <div className="relative">
+            <div className="absolute left-0 right-0 top-[calc(50%-1px)] h-[2px] rounded bg-slate-300 dark:bg-slate-700" aria-hidden />
+            <div
+              className="absolute left-0 top-[calc(50%-1px)] h-[2px] rounded bg-[#7c3aed]"
+              style={{ width: `${(current / (steps.length - 1)) * 100}%` }}
+              role="progressbar"
+              aria-valuemin={0}
+              aria-valuemax={steps.length - 1}
+              aria-valuenow={current}
+              aria-label="Step progress"
+            />
+            <ol className="relative z-10 flex items-center justify-between gap-3 text-xs">
+              {steps.map((s, i) => {
+                const state = i < current ? 'complete' : i === current ? 'current' : 'upcoming'
+                return (
+                  <li key={s.label} className="flex flex-1 items-center">
+                    <div className="flex flex-col items-center text-center">
+                      <div
+                        className={[
+                          'flex h-9 w-9 items-center justify-center rounded-full border text-xs font-medium',
+                          state === 'current'
+                            ? 'bg-[#7c3aed] text-white border-[#7c3aed]'
+                            : state === 'complete'
+                            ? 'bg-[#7c3aed]/10 text-[#7c3aed] border-[#7c3aed]/40'
+                            : 'bg-white/70 text-slate-600 border-slate-300 backdrop-blur-sm dark:bg-slate-900/40 dark:border-slate-700 dark:text-slate-300',
+                        ].join(' ')}
+                        aria-current={state === 'current' ? 'step' : undefined}
+                      >
+                        {i + 1}
+                      </div>
+                      <span className="mt-1 whitespace-nowrap text-xs text-slate-600 dark:text-slate-300">
+                        {s.label}
+                      </span>
                     </div>
-                    <span className="mt-2 whitespace-nowrap text-[0.8rem] text-slate-600 dark:text-slate-300">
-                      {s.label}
-                    </span>
-                  </div>
-                </li>
-              )
-            })}
-          </ol>
+                  </li>
+                )
+              })}
+            </ol>
+          </div>
         </div>
 
         <div className="mx-auto mt-8 max-w-xl text-center">
