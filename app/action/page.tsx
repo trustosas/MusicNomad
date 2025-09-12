@@ -1,7 +1,6 @@
 'use client'
 
 import * as ToggleGroup from '@radix-ui/react-toggle-group'
-import { Music } from 'lucide-react'
 import { useState } from 'react'
 
 export const dynamic = 'force-static'
@@ -11,14 +10,6 @@ export default function ActionPage() {
   const [mode, setMode] = useState<'transfer' | 'sync'>('transfer')
   const [source, setSource] = useState<'spotify' | null>(null)
 
-  const ICONS: Record<'spotify' | 'apple' | 'youtube' | 'tidal' | 'deezer' | 'amazon', string> = {
-    spotify: 'https://www.tunemymusic.com/images/platformsLogo/white/Spotify.svg',
-    apple: 'https://www.tunemymusic.com/images/platformsLogo/white/Apple.svg',
-    youtube: 'https://www.tunemymusic.com/images/platformsLogo/white/YouTubeMediaConnect.svg',
-    tidal: 'https://www.tunemymusic.com/images/platformsLogo/white/Tidal.svg',
-    deezer: 'https://www.tunemymusic.com/images/platformsLogo/white/Deezer.svg',
-    amazon: 'https://www.tunemymusic.com/images/platformsLogo/white/Amazon.svg',
-  }
 
   const services: { id: 'spotify' | 'apple' | 'youtube' | 'tidal' | 'deezer' | 'amazon'; name: string; enabled: boolean }[] = [
     { id: 'spotify', name: 'Spotify', enabled: true },
@@ -79,11 +70,8 @@ export default function ActionPage() {
                   ].join(' ')}
                   aria-pressed={isSelected}
                 >
-                  {ICONS[svc.id] ? (
-                    <img src={ICONS[svc.id]} alt={svc.name} className="service-icon max-h-8 w-auto object-contain" />
-                  ) : (
-                    <Music className="h-6 w-6" />
-                  )}
+                  <span className={`service-icon service-icon--${svc.id}`} aria-hidden="true" />
+                  <span className="sr-only">{svc.name}</span>
                 </button>
               )
             })}
