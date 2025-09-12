@@ -18,6 +18,9 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`font-sans ${GeistSans.variable} ${GeistMono.variable}`}>
+        {/* Site navbar */}
+        {/**/}
+        {require('@/components/site/Navbar').default()}
         {children}
         <Analytics />
       </body>
