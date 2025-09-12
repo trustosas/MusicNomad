@@ -37,6 +37,9 @@
   --sidebar-accent-foreground: oklch(0.205 0 0);
   --sidebar-border: oklch(0.922 0 0);
   --sidebar-ring: oklch(0.708 0 0);
+
+  /* Icon theme color (light mode: dark purple) */
+  --icon-color: #7c3aed;
 }
 
 .dark {
@@ -72,6 +75,9 @@
   --sidebar-accent-foreground: oklch(0.985 0 0);
   --sidebar-border: oklch(0.269 0 0);
   --sidebar-ring: oklch(0.439 0 0);
+
+  /* Icon theme color (dark mode: light lilac) */
+  --icon-color: #e9d5ff;
 }
 
 @theme inline {
@@ -122,4 +128,9 @@
   body {
     @apply bg-background text-foreground;
   }
+}
+
+/* Themed icon color applied to all Lucide icons */
+.lucide {
+  color: var(--icon-color);
 }
