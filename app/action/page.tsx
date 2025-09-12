@@ -6,20 +6,19 @@ import { useState } from 'react'
 
 export const dynamic = 'force-static'
 
-function SpotifyIcon(props: React.SVGProps<SVGSVGElement>) {
-  return (
-    <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" {...props}>
-      <path
-        fill="currentColor"
-        d="M12 1.5C6.201 1.5 1.5 6.201 1.5 12S6.201 22.5 12 22.5 22.5 17.799 22.5 12 17.799 1.5 12 1.5zm5.137 14.639a.937.937 0 0 1-1.289.31c-3.53-2.157-7.978-2.645-13.215-1.451a.937.937 0 1 1-.404-1.829c5.646-1.248 10.534-.694 14.39 1.658a.937.937 0 0 1 .518 1.312zm1.725-3.357a1.171 1.171 0 0 1-1.611.388c-4.043-2.47-10.22-3.192-14.998-1.75a1.171 1.171 0 1 1-.694-2.244c5.391-1.667 12.267-.856 16.866 1.922.55.335.723 1.05.437 1.684zM19.1 8.63a1.406 1.406 0 0 1-1.934.468c-4.629-2.819-12.133-3.075-16.438-1.685a1.406 1.406 0 1 1-.824-2.698c5.009-1.53 13.274-1.232 18.567 2.002.67.408.884 1.306.63 1.913z"
-      />
-    </svg>
-  )
-}
 
 export default function ActionPage() {
   const [mode, setMode] = useState<'transfer' | 'sync'>('transfer')
   const [source, setSource] = useState<'spotify' | null>(null)
+
+  const ICONS: Record<'spotify' | 'apple' | 'youtube' | 'tidal' | 'deezer' | 'amazon', string> = {
+    spotify: 'https://www.tunemymusic.com/images/platformsLogo/color/Spotify.svg',
+    apple: 'https://www.tunemymusic.com/images/platformsLogo/color/Apple.svg',
+    youtube: 'https://www.tunemymusic.com/images/platformsLogo/color/YouTubeMediaConnect.svg',
+    tidal: 'https://www.tunemymusic.com/images/platformsLogo/color/Tidal.svg',
+    deezer: 'https://www.tunemymusic.com/images/platformsLogo/color/Deezer.svg',
+    amazon: 'https://www.tunemymusic.com/images/platformsLogo/color/Amazon.svg',
+  }
 
   const services: { id: 'spotify' | 'apple' | 'youtube' | 'tidal' | 'deezer' | 'amazon'; name: string; enabled: boolean }[] = [
     { id: 'spotify', name: 'Spotify', enabled: true },
@@ -80,9 +79,10 @@ export default function ActionPage() {
                   ].join(' ')}
                   aria-pressed={isSelected}
                 >
-                  <span className={`flex h-9 w-9 items-center justify-center rounded-md ${svc.enabled ? 'text-[#1DB954]' : 'text-slate-400'}`}>
-                    {isSpotify ? (
-                      <SpotifyIcon className="h-6 w-6" />
+                  <span className="flex h-9 w-9 items-center justify-center rounded-md">
+                    {ICONS[svc.id] ? (
+                      // Using TuneMyMusic icon URLs as requested
+                      <img src={ICONS[svc.id]} alt={svc.name} className="h-6 w-6 object-contain" />
                     ) : (
                       <Music className="h-6 w-6" />
                     )}
