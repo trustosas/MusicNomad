@@ -11,6 +11,11 @@ const nextConfig: NextConfig = {
         },
       },
     },
+    // Allow Builder.io preview/screenshot proxy origins during development
+    allowedDevOrigins: [
+      'https://vivacious-smoke.net',
+      'https://*.vivacious-smoke.net',
+    ],
   },
   eslint: {
     ignoreDuringBuilds: true,
