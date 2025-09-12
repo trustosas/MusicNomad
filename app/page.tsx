@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
+import { ArrowLeftRight, RefreshCw, BadgeCheck } from 'lucide-react'
 
 export default function HomePage() {
   return (
@@ -17,8 +18,48 @@ export default function HomePage() {
               <Link href="/transfer">Start transfer</Link>
             </Button>
             <Button asChild variant="outline" size="lg">
-              <Link href="/transfer">Learn more</Link>
+              <Link href="#features">Learn more</Link>
             </Button>
+          </div>
+        </div>
+      </section>
+      <section id="features" className="bg-[#f3e8ff] dark:bg-[#1f1029]">
+        <div className="container mx-auto px-4 py-16 lg:py-24">
+          <h2 className="text-3xl font-semibold text-center mb-12">Features</h2>
+          <div className="grid gap-10 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="space-y-3">
+              <div className="flex items-center gap-2">
+                <ArrowLeftRight className="h-6 w-6 text-[#7c3aed]" />
+                <h3 className="text-xl font-medium">Transfer</h3>
+              </div>
+              <ul className="list-disc pl-5 space-y-1 text-muted-foreground">
+                <li>Move playlists between streaming services instantly</li>
+                <li>Automatically matches songs across platforms</li>
+                <li>No manual rebuilding required</li>
+              </ul>
+            </div>
+            <div className="space-y-3">
+              <div className="flex items-center gap-2">
+                <RefreshCw className="h-6 w-6 text-[#7c3aed]" />
+                <h3 className="text-xl font-medium">Sync</h3>
+              </div>
+              <ul className="list-disc pl-5 space-y-1 text-muted-foreground">
+                <li>Keep libraries updated across multiple services</li>
+                <li>New additions appear everywhere automatically</li>
+                <li>Works in the background continuously</li>
+              </ul>
+            </div>
+            <div className="space-y-3">
+              <div className="flex items-center gap-2">
+                <BadgeCheck className="h-6 w-6 text-[#7c3aed]" />
+                <h3 className="text-xl font-medium">Benefits</h3>
+              </div>
+              <ul className="list-disc pl-5 space-y-1 text-muted-foreground">
+                <li>Never lose your music collection</li>
+                <li>Switch services without starting over</li>
+                <li>True music portability and freedom</li>
+              </ul>
+            </div>
           </div>
         </div>
       </section>
