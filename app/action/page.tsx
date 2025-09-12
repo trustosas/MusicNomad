@@ -12,12 +12,12 @@ export default function ActionPage() {
   const [source, setSource] = useState<'spotify' | null>(null)
 
   const ICONS: Record<'spotify' | 'apple' | 'youtube' | 'tidal' | 'deezer' | 'amazon', string> = {
-    spotify: 'https://www.tunemymusic.com/images/platformsLogo/color/Spotify.svg',
-    apple: 'https://www.tunemymusic.com/images/platformsLogo/color/Apple.svg',
-    youtube: 'https://www.tunemymusic.com/images/platformsLogo/color/YouTubeMediaConnect.svg',
-    tidal: 'https://www.tunemymusic.com/images/platformsLogo/color/Tidal.svg',
-    deezer: 'https://www.tunemymusic.com/images/platformsLogo/color/Deezer.svg',
-    amazon: 'https://www.tunemymusic.com/images/platformsLogo/color/Amazon.svg',
+    spotify: 'https://www.tunemymusic.com/images/platformsLogo/white/Spotify.svg',
+    apple: 'https://www.tunemymusic.com/images/platformsLogo/white/Apple.svg',
+    youtube: 'https://www.tunemymusic.com/images/platformsLogo/white/YouTubeMediaConnect.svg',
+    tidal: 'https://www.tunemymusic.com/images/platformsLogo/white/Tidal.svg',
+    deezer: 'https://www.tunemymusic.com/images/platformsLogo/white/Deezer.svg',
+    amazon: 'https://www.tunemymusic.com/images/platformsLogo/white/Amazon.svg',
   }
 
   const services: { id: 'spotify' | 'apple' | 'youtube' | 'tidal' | 'deezer' | 'amazon'; name: string; enabled: boolean }[] = [
@@ -80,7 +80,7 @@ export default function ActionPage() {
                   aria-pressed={isSelected}
                 >
                   {ICONS[svc.id] ? (
-                    <img src={ICONS[svc.id]} alt={svc.name} className="max-h-8 w-auto object-contain" />
+                    <img src={ICONS[svc.id]} alt={svc.name} className="service-icon max-h-8 w-auto object-contain" />
                   ) : (
                     <Music className="h-6 w-6" />
                   )}
