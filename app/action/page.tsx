@@ -58,22 +58,15 @@ export default function ActionPage() {
         {/* Flow widget: step circles */}
         <div className="mx-auto mt-10 max-w-2xl px-2">
           <div className="relative">
-            <div className="absolute left-4 right-4 top-1/2 -translate-y-1/2 h-[2px] rounded bg-slate-300 dark:bg-slate-700" aria-hidden />
-            <div
-              className="absolute left-4 top-1/2 -translate-y-1/2 h-[2px] rounded bg-[#7c3aed]"
-              style={{ width: `${(current / (steps.length - 1)) * 100}%` }}
-              role="progressbar"
-              aria-valuemin={0}
-              aria-valuemax={steps.length - 1}
-              aria-valuenow={current}
-              aria-label="Step progress"
-            />
-            <ol className="relative z-10 flex items-center justify-between gap-3 text-[11px]">
+            <ol
+              className="grid items-center text-[11px]"
+              style={{ gridTemplateColumns: Array.from({ length: steps.length * 2 - 1 }, (_, i) => (i % 2 === 0 ? 'auto' : '1fr')).join(' ') }}
+            >
               {steps.map((s, i) => {
                 const state = i < current ? 'complete' : i === current ? 'current' : 'upcoming'
                 return (
-                  <li key={s.label} className="flex flex-1 items-center">
-                    <div className="flex flex-col items-center text-center">
+                  <>
+                    <li key={`step-${s.label}`} className="relative flex flex-col items-center text-center z-10">
                       <div
                         className={[
                           'flex h-8 w-8 items-center justify-center rounded-full border text-[10px] font-medium',
@@ -91,25 +84,22 @@ export default function ActionPage() {
                           <span>{i + 1}</span>
                         )}
                       </div>
-                      <span className="mt-1 whitespace-nowrap text-[11px] text-slate-600 dark:text-slate-300">
-                        {s.label}
-                      </span>
+                      <span className="mt-1 whitespace-nowrap text-[11px] text-slate-600 dark:text-slate-300">{s.label}</span>
                       <div className="mt-1.5 flex flex-col items-center gap-[2px]" aria-hidden>
-                        <span className={[
-                          'block h-[3px] w-8 rounded-full',
-                          state === 'current' ? 'bg-[#7c3aed]' : state === 'complete' ? 'bg-[#7c3aed]' : 'bg-slate-300 dark:bg-slate-700',
-                        ].join(' ')} />
-                        <span className={[
-                          'block h-[3px] w-6 rounded-full',
-                          state === 'current' ? 'bg-[#7c3aed]/60' : state === 'complete' ? 'bg-[#7c3aed]' : 'bg-slate-300 dark:bg-slate-700',
-                        ].join(' ')} />
-                        <span className={[
-                          'block h-[3px] w-4 rounded-full',
-                          state === 'current' ? 'bg-[#7c3aed]/30' : state === 'complete' ? 'bg-[#7c3aed]' : 'bg-slate-300 dark:bg-slate-700',
-                        ].join(' ')} />
+                        <span className={['block h-[3px] w-8 rounded-full', state === 'current' ? 'bg-[#7c3aed]' : state === 'complete' ? 'bg-[#7c3aed]' : 'bg-slate-300 dark:bg-slate-700'].join(' ')} />
+                        <span className={['block h-[3px] w-6 rounded-full', state === 'current' ? 'bg-[#7c3aed]/60' : state === 'complete' ? 'bg-[#7c3aed]' : 'bg-slate-300 dark:bg-slate-700'].join(' ')} />
+                        <span className={['block h-[3px] w-4 rounded-full', state === 'current' ? 'bg-[#7c3aed]/30' : state === 'complete' ? 'bg-[#7c3aed]' : 'bg-slate-300 dark:bg-slate-700'].join(' ')} />
                       </div>
-                    </div>
-                  </li>
+                    </li>
+                    {i < steps.length - 1 && (
+                      <li key={`conn-${s.label}`} className="relative h-0" aria-hidden>
+                        <div className="absolute top-1/2 -translate-y-1/2 h-[2px] rounded bg-slate-300 dark:bg-slate-700" style={{ left: '-1rem', right: '-1rem' }} />
+                        {i < current && (
+                          <div className="absolute top-1/2 -translate-y-1/2 h-[2px] rounded bg-[#7c3aed]" style={{ left: '-1rem', right: '-1rem' }} />
+                        )}
+                      </li>
+                    )}
+                  </>
                 )
               })}
             </ol>
