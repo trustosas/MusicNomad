@@ -6,7 +6,7 @@ export default function HomePage() {
     <main className="relative min-h-[70vh] bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-950 dark:to-slate-900">
       <section className="container mx-auto px-4 py-24 lg:py-32">
         <div className="mx-auto max-w-3xl text-center space-y-6">
-          <h1 className="text-4xl font-semibold tracking-tight sm:text-5xl">
+          <h1 className="text-4xl font-semibold tracking-tight sm:text-5xl bg-gradient-to-r from-[#c084fc] to-[#7c3aed] bg-clip-text text-transparent">
             Transfer and sync your music across services
           </h1>
           <p className="text-base sm:text-lg text-muted-foreground">
