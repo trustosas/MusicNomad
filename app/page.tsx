@@ -15,7 +15,7 @@ export default function HomePage() {
           </p>
           <div className="flex items-center justify-center gap-3 pt-2">
             <Button asChild size="lg">
-              <Link href="/action">Start transfer</Link>
+              <Link href="/action">Get started</Link>
             </Button>
             <Button asChild variant="outline" size="lg">
               <Link href="#features">Learn more</Link>
