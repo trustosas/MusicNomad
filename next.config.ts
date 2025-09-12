@@ -1,6 +1,11 @@
 import type { NextConfig } from "next"
 
 const nextConfig: NextConfig = {
+  async redirects() {
+    return [
+      { source: '/transfer', destination: '/action', permanent: true },
+    ]
+  },
   experimental: {
     // Enable the latest Next.js features
     turbo: {
