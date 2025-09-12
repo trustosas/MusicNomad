@@ -1,6 +1,7 @@
 'use client'
 
 import * as ToggleGroup from '@radix-ui/react-toggle-group'
+import { Check } from 'lucide-react'
 import { useState } from 'react'
 
 export const dynamic = 'force-static'
@@ -79,11 +80,29 @@ export default function ActionPage() {
                         ].join(' ')}
                         aria-current={state === 'current' ? 'step' : undefined}
                       >
-                        {i + 1}
+                        {state === 'complete' ? (
+                          <Check className="h-4 w-4" strokeWidth={3} />
+                        ) : (
+                          <span>{i + 1}</span>
+                        )}
                       </div>
                       <span className="mt-1 whitespace-nowrap text-[11px] text-slate-600 dark:text-slate-300">
                         {s.label}
                       </span>
+                      <div className="mt-1.5 flex flex-col items-center gap-[2px]" aria-hidden>
+                        <span className={[
+                          'block h-[3px] w-8 rounded-full',
+                          state === 'current' ? 'bg-[#7c3aed]' : state === 'complete' ? 'bg-[#7c3aed]' : 'bg-slate-300 dark:bg-slate-700',
+                        ].join(' ')} />
+                        <span className={[
+                          'block h-[3px] w-6 rounded-full',
+                          state === 'current' ? 'bg-[#7c3aed]/60' : state === 'complete' ? 'bg-[#7c3aed]' : 'bg-slate-300 dark:bg-slate-700',
+                        ].join(' ')} />
+                        <span className={[
+                          'block h-[3px] w-4 rounded-full',
+                          state === 'current' ? 'bg-[#7c3aed]/30' : state === 'complete' ? 'bg-[#7c3aed]' : 'bg-slate-300 dark:bg-slate-700',
+                        ].join(' ')} />
+                      </div>
                     </div>
                   </li>
                 )
