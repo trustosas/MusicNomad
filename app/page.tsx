@@ -29,7 +29,7 @@ export default function HomePage() {
           <div className="grid gap-10 sm:grid-cols-2 lg:grid-cols-3">
             <div className="space-y-3">
               <div className="flex items-center gap-2">
-                <ArrowLeftRight className="h-6 w-6 text-[#7c3aed]" />
+                <ArrowLeftRight className="h-6 w-6" />
                 <h3 className="text-xl font-medium">Transfer</h3>
               </div>
               <ul className="list-disc pl-5 space-y-1 text-muted-foreground">
@@ -40,7 +40,7 @@ export default function HomePage() {
             </div>
             <div className="space-y-3">
               <div className="flex items-center gap-2">
-                <RefreshCw className="h-6 w-6 text-[#7c3aed]" />
+                <RefreshCw className="h-6 w-6" />
                 <h3 className="text-xl font-medium">Sync</h3>
               </div>
               <ul className="list-disc pl-5 space-y-1 text-muted-foreground">
@@ -51,7 +51,7 @@ export default function HomePage() {
             </div>
             <div className="space-y-3">
               <div className="flex items-center gap-2">
-                <BadgeCheck className="h-6 w-6 text-[#7c3aed]" />
+                <BadgeCheck className="h-6 w-6" />
                 <h3 className="text-xl font-medium">Benefits</h3>
               </div>
               <ul className="list-disc pl-5 space-y-1 text-muted-foreground">
