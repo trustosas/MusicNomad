@@ -148,17 +148,17 @@ img.service-icon {
 
 /* Precise-color service icons using CSS mask (uses --icon-color) */
 .service-icon {
+  --icon-h: 2rem;
   display: inline-block;
-  height: 2rem;
-  width: auto;
-  aspect-ratio: var(--icon-aspect, 1);
+  height: var(--icon-h);
+  width: min(calc(var(--icon-aspect, 1) * var(--icon-h)), 100%);
   background-color: var(--icon-color);
   -webkit-mask-repeat: no-repeat;
   -webkit-mask-position: center;
-  -webkit-mask-size: 100% 100%;
+  -webkit-mask-size: contain;
   mask-repeat: no-repeat;
   mask-position: center;
-  mask-size: 100% 100%;
+  mask-size: contain;
 }
 
 /* External white SVGs used as masks with measured aspect ratios */
