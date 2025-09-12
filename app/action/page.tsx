@@ -119,7 +119,11 @@ export default function ActionPage() {
           </div>
 
           <div className="mt-8 mx-auto flex max-w-xs flex-col gap-3">
-            <Button size="lg" className="w-full">Sign in</Button>
+            <Button size="lg" className="w-full" disabled={!source} onClick={() => {
+              if (source === 'spotify') {
+                window.location.href = '/api/spotify/auth'
+              }
+            }}>Sign in</Button>
             <Button size="lg" variant="outline" className="w-full">Select content</Button>
           </div>
         </div>
