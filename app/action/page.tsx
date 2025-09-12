@@ -1,6 +1,7 @@
 'use client'
 
 import * as ToggleGroup from '@radix-ui/react-toggle-group'
+import { Button } from '@/components/ui/button'
 import { Check } from 'lucide-react'
 import { useState } from 'react'
 
@@ -115,6 +116,11 @@ export default function ActionPage() {
                 </button>
               )
             })}
+          </div>
+
+          <div className="mt-8 mx-auto flex max-w-xs flex-col gap-3">
+            <Button size="lg" className="w-full">Sign in</Button>
+            <Button size="lg" variant="outline" className="w-full">Select content</Button>
           </div>
         </div>
       </div>
