@@ -38,10 +38,10 @@
   --sidebar-border: oklch(0.922 0 0);
   --sidebar-ring: oklch(0.708 0 0);
 
-  /* Icon theme color (light mode: dark purple) */
+  /* Icon theme color */
   --icon-color: #7c3aed;
 
-  /* Service icon filter (light) to recolor white logos to dark purple */
+  /* Service icon filter (recolor white logos to purple) */
   --service-icon-filter: invert(21%) sepia(94%) saturate(4101%) hue-rotate(265deg) brightness(93%) contrast(98%);
 }
 
@@ -79,11 +79,11 @@
   --sidebar-border: oklch(0.269 0 0);
   --sidebar-ring: oklch(0.439 0 0);
 
-  /* Icon theme color (dark mode: light lilac) */
-  --icon-color: #e9d5ff;
+  /* Icon theme color (dark) */
+  --icon-color: #7c3aed;
 
-  /* Service icon filter (dark) to recolor white logos to light lilac */
-  --service-icon-filter: invert(92%) sepia(12%) saturate(1192%) hue-rotate(204deg) brightness(102%) contrast(104%);
+  /* Service icon filter (dark) */
+  --service-icon-filter: invert(21%) sepia(94%) saturate(4101%) hue-rotate(265deg) brightness(93%) contrast(98%);
 }
 
 @theme inline {
