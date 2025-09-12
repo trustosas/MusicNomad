@@ -46,13 +46,57 @@ export default function ActionPage() {
           </ToggleGroup.Root>
         </div>
 
-        <div className="mx-auto mt-12 max-w-xl text-center">
-          <h2 className="text-2xl font-semibold">Step 1: Select the source streaming service</h2>
+        {/* Flow widget: step circles */}
+        <div className="mx-auto mt-10 max-w-2xl px-2">
+          <ol className="flex items-center justify-between gap-3 text-sm">
+            {[
+              { label: 'Select source' },
+              { label: 'Select destination' },
+              { label: 'Review details' },
+              { label: 'Start transfer' },
+            ].map((s, i, arr) => {
+              const current = 0
+              const state = i < current ? 'complete' : i === current ? 'current' : 'upcoming'
+              return (
+                <li key={s.label} className="flex flex-1 items-center">
+                  {i !== 0 && (
+                    <div
+                      className={[
+                        'mx-2 h-[2px] w-full rounded',
+                        state === 'complete' ? 'bg-[#7c3aed]' : 'bg-slate-300 dark:bg-slate-700',
+                      ].join(' ')}
+                      aria-hidden
+                    />
+                  )}
+                  <div className="flex flex-col items-center text-center">
+                    <div
+                      className={[
+                        'flex h-9 w-9 items-center justify-center rounded-full border text-xs font-medium',
+                        state === 'current'
+                          ? 'bg-[#7c3aed] text-white border-[#7c3aed]'
+                          : state === 'complete'
+                          ? 'bg-[#7c3aed]/10 text-[#7c3aed] border-[#7c3aed]/40'
+                          : 'bg-white/70 text-slate-600 border-slate-300 backdrop-blur-sm dark:bg-slate-900/40 dark:border-slate-700 dark:text-slate-300',
+                      ].join(' ')}
+                      aria-current={state === 'current' ? 'step' : undefined}
+                    >
+                      {i + 1}
+                    </div>
+                    <span className="mt-2 whitespace-nowrap text-[0.8rem] text-slate-600 dark:text-slate-300">
+                      {s.label}
+                    </span>
+                  </div>
+                </li>
+              )
+            })}
+          </ol>
+        </div>
+
+        <div className="mx-auto mt-8 max-w-xl text-center">
           <p className="mt-2 text-sm text-muted-foreground">Only Spotify is available in this MVP. Others are coming soon.</p>
 
           <div className="mt-8 grid grid-cols-2 gap-4">
             {services.map((svc) => {
-              const isSpotify = svc.id === 'spotify'
               const isSelected = source === svc.id
               return (
                 <button
