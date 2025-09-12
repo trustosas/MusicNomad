@@ -72,21 +72,18 @@ export default function ActionPage() {
                   }}
                   disabled={!svc.enabled}
                   className={[
-                    'group flex items-center gap-3 rounded-lg border p-4 text-left transition-colors',
+                    'group flex items-center justify-center rounded-lg border p-4 text-center transition-colors',
                     'bg-white/70 backdrop-blur-sm dark:bg-slate-900/40 dark:border-slate-800',
                     svc.enabled ? 'hover:border-[#7c3aed] focus-visible:border-[#7c3aed] focus-visible:ring-[#7c3aed]/40 focus-visible:ring-[3px] outline-none' : 'opacity-50 grayscale cursor-not-allowed',
                     isSelected ? 'ring-2 ring-[#7c3aed]/60 border-[#7c3aed]' : '',
                   ].join(' ')}
                   aria-pressed={isSelected}
                 >
-                  <span className="flex h-9 w-9 items-center justify-center rounded-md">
-                    {ICONS[svc.id] ? (
-                      <img src={ICONS[svc.id]} alt={svc.name} className="h-6 w-6 object-contain" />
-                    ) : (
-                      <Music className="h-6 w-6" />
-                    )}
-                  </span>
-                  <span className="text-sm font-medium">{svc.name}</span>
+                  {ICONS[svc.id] ? (
+                    <img src={ICONS[svc.id]} alt={svc.name} className="max-h-8 w-auto object-contain" />
+                  ) : (
+                    <Music className="h-6 w-6" />
+                  )}
                 </button>
               )
             })}
