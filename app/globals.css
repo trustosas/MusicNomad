@@ -145,3 +145,25 @@
 img.service-icon {
   filter: var(--service-icon-filter);
 }
+
+/* Precise-color service icons using CSS mask (uses --icon-color) */
+.service-icon {
+  display: inline-block;
+  width: 2rem;
+  height: 2rem;
+  background-color: var(--icon-color);
+  -webkit-mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  -webkit-mask-size: contain;
+  mask-repeat: no-repeat;
+  mask-position: center;
+  mask-size: contain;
+}
+
+/* External white SVGs used as masks */
+.service-icon--spotify { -webkit-mask-image: url('https://www.tunemymusic.com/images/platformsLogo/white/Spotify.svg'); mask-image: url('https://www.tunemymusic.com/images/platformsLogo/white/Spotify.svg'); }
+.service-icon--apple { -webkit-mask-image: url('https://www.tunemymusic.com/images/platformsLogo/white/Apple.svg'); mask-image: url('https://www.tunemymusic.com/images/platformsLogo/white/Apple.svg'); }
+.service-icon--youtube { -webkit-mask-image: url('https://www.tunemymusic.com/images/platformsLogo/white/YouTubeMediaConnect.svg'); mask-image: url('https://www.tunemymusic.com/images/platformsLogo/white/YouTubeMediaConnect.svg'); }
+.service-icon--tidal { -webkit-mask-image: url('https://www.tunemymusic.com/images/platformsLogo/white/Tidal.svg'); mask-image: url('https://www.tunemymusic.com/images/platformsLogo/white/Tidal.svg'); }
+.service-icon--deezer { -webkit-mask-image: url('https://www.tunemymusic.com/images/platformsLogo/white/Deezer.svg'); mask-image: url('https://www.tunemymusic.com/images/platformsLogo/white/Deezer.svg'); }
+.service-icon--amazon { -webkit-mask-image: url('https://www.tunemymusic.com/images/platformsLogo/white/Amazon.svg'); mask-image: url('https://www.tunemymusic.com/images/platformsLogo/white/Amazon.svg'); }
