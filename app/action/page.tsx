@@ -58,48 +58,30 @@ export default function ActionPage() {
         {/* Flow widget: step circles */}
         <div className="mx-auto mt-10 max-w-2xl px-2">
           <div className="relative">
-            <ol
-              className="grid items-center text-[11px]"
-              style={{ gridTemplateColumns: Array.from({ length: steps.length * 2 - 1 }, (_, i) => (i % 2 === 0 ? 'auto' : '1fr')).join(' ') }}
-            >
+            <ol className="relative z-10 flex items-center justify-between gap-3 text-[11px]">
               {steps.map((s, i) => {
                 const state = i < current ? 'complete' : i === current ? 'current' : 'upcoming'
                 return (
-                  <>
-                    <li key={`step-${s.label}`} className="relative flex flex-col items-center text-center z-10">
-                      <div
-                        className={[
-                          'flex h-8 w-8 items-center justify-center rounded-full border text-[10px] font-medium',
-                          state === 'current'
-                            ? 'bg-[#7c3aed] text-white border-[#7c3aed]'
-                            : state === 'complete'
-                            ? 'bg-[#7c3aed]/10 text-[#7c3aed] border-[#7c3aed]/40'
-                            : 'bg-white/70 text-slate-600 border-slate-300 backdrop-blur-sm dark:bg-slate-900/40 dark:border-slate-700 dark:text-slate-300',
-                        ].join(' ')}
-                        aria-current={state === 'current' ? 'step' : undefined}
-                      >
-                        {state === 'complete' ? (
-                          <Check className="h-4 w-4" strokeWidth={3} />
-                        ) : (
-                          <span>{i + 1}</span>
-                        )}
-                      </div>
-                      <span className="mt-1 whitespace-nowrap text-[11px] text-slate-600 dark:text-slate-300">{s.label}</span>
-                      <div className="mt-1.5 flex flex-col items-center gap-[2px]" aria-hidden>
-                        <span className={['block h-[3px] w-8 rounded-full', state === 'current' ? 'bg-[#7c3aed]' : state === 'complete' ? 'bg-[#7c3aed]' : 'bg-slate-300 dark:bg-slate-700'].join(' ')} />
-                        <span className={['block h-[3px] w-6 rounded-full', state === 'current' ? 'bg-[#7c3aed]/60' : state === 'complete' ? 'bg-[#7c3aed]' : 'bg-slate-300 dark:bg-slate-700'].join(' ')} />
-                        <span className={['block h-[3px] w-4 rounded-full', state === 'current' ? 'bg-[#7c3aed]/30' : state === 'complete' ? 'bg-[#7c3aed]' : 'bg-slate-300 dark:bg-slate-700'].join(' ')} />
-                      </div>
-                    </li>
-                    {i < steps.length - 1 && (
-                      <li key={`conn-${s.label}`} className="relative h-0" aria-hidden>
-                        <div className="absolute top-1/2 -translate-y-1/2 h-[2px] rounded bg-slate-300 dark:bg-slate-700" style={{ left: '-1rem', right: '-1rem' }} />
-                        {i < current && (
-                          <div className="absolute top-1/2 -translate-y-1/2 h-[2px] rounded bg-[#7c3aed]" style={{ left: '-1rem', right: '-1rem' }} />
-                        )}
-                      </li>
-                    )}
-                  </>
+                  <li key={s.label} className="flex flex-col items-center text-center">
+                    <div
+                      className={[
+                        'flex h-8 w-8 items-center justify-center rounded-full border text-[10px] font-medium',
+                        state === 'current'
+                          ? 'bg-[#7c3aed] text-white border-[#7c3aed]'
+                          : state === 'complete'
+                          ? 'bg-[#7c3aed]/10 text-[#7c3aed] border-[#7c3aed]/40'
+                          : 'bg-white/70 text-slate-600 border-slate-300 backdrop-blur-sm dark:bg-slate-900/40 dark:border-slate-700 dark:text-slate-300',
+                      ].join(' ')}
+                      aria-current={state === 'current' ? 'step' : undefined}
+                    >
+                      {state === 'complete' ? (
+                        <Check className="h-4 w-4" strokeWidth={3} />
+                      ) : (
+                        <span>{i + 1}</span>
+                      )}
+                    </div>
+                    <span className="mt-1 whitespace-nowrap text-[11px] text-slate-600 dark:text-slate-300">{s.label}</span>
+                  </li>
                 )
               })}
             </ol>
