@@ -9,7 +9,7 @@ export default function Navbar() {
       <div className="container mx-auto px-4 h-14 flex items-center justify-between">
         <Link href="/" className="flex items-center gap-2 font-semibold">
           <Music className="h-5 w-5" />
-          <span>MusicNomad</span>
+          <span className="bg-gradient-to-r from-[#c084fc] to-[#7c3aed] bg-clip-text text-transparent">MusicNomad</span>
         </Link>
         <div className="flex items-center gap-2">
           <Button asChild variant="outline" size="icon" aria-label="Settings">
