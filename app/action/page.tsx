@@ -57,25 +57,20 @@ export default function ActionPage() {
         {/* Flow widget: step circles */}
         <div className="mx-auto mt-10 max-w-2xl px-2">
           <div className="relative">
-            <div className="absolute left-0 right-0 top-[calc(50%-1px)] h-[2px] rounded bg-slate-300 dark:bg-slate-700" aria-hidden />
-            <div
-              className="absolute left-0 top-[calc(50%-1px)] h-[2px] rounded bg-[#7c3aed]"
-              style={{ width: `${(current / (steps.length - 1)) * 100}%` }}
-              role="progressbar"
-              aria-valuemin={0}
-              aria-valuemax={steps.length - 1}
-              aria-valuenow={current}
-              aria-label="Step progress"
-            />
-            <ol className="relative z-10 flex items-center justify-between gap-3 text-xs">
+            <ol className="flex items-center justify-between gap-3 text-[11px]">
               {steps.map((s, i) => {
                 const state = i < current ? 'complete' : i === current ? 'current' : 'upcoming'
                 return (
                   <li key={s.label} className="flex flex-1 items-center">
+                    {i > 0 && (
+                      <div className="mx-2 relative h-[2px] w-full rounded bg-slate-300 dark:bg-slate-700" aria-hidden>
+                        <div className={i <= current ? 'absolute inset-0 rounded bg-[#7c3aed]' : 'absolute inset-0 rounded bg-transparent'} />
+                      </div>
+                    )}
                     <div className="flex flex-col items-center text-center">
                       <div
                         className={[
-                          'flex h-9 w-9 items-center justify-center rounded-full border text-xs font-medium',
+                          'flex h-8 w-8 items-center justify-center rounded-full border text-[10px] font-medium',
                           state === 'current'
                             ? 'bg-[#7c3aed] text-white border-[#7c3aed]'
                             : state === 'complete'
@@ -86,7 +81,7 @@ export default function ActionPage() {
                       >
                         {i + 1}
                       </div>
-                      <span className="mt-1 whitespace-nowrap text-xs text-slate-600 dark:text-slate-300">
+                      <span className="mt-1 whitespace-nowrap text-[11px] text-slate-600 dark:text-slate-300">
                         {s.label}
                       </span>
                     </div>
