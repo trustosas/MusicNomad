@@ -40,6 +40,9 @@
 
   /* Icon theme color (light mode: dark purple) */
   --icon-color: #7c3aed;
+
+  /* Service icon filter (light) to recolor white logos to dark purple */
+  --service-icon-filter: invert(21%) sepia(94%) saturate(4101%) hue-rotate(265deg) brightness(93%) contrast(98%);
 }
 
 .dark {
@@ -78,6 +81,9 @@
 
   /* Icon theme color (dark mode: light lilac) */
   --icon-color: #e9d5ff;
+
+  /* Service icon filter (dark) to recolor white logos to light lilac */
+  --service-icon-filter: invert(92%) sepia(12%) saturate(1192%) hue-rotate(204deg) brightness(102%) contrast(104%);
 }
 
 @theme inline {
@@ -133,4 +139,9 @@
 /* Themed icon color applied to all Lucide icons */
 .lucide {
   color: var(--icon-color);
+}
+
+/* Apply themed color filters to external white service logos */
+img.service-icon {
+  filter: var(--service-icon-filter);
 }
