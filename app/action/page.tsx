@@ -81,7 +81,6 @@ export default function ActionPage() {
                 >
                   <span className="flex h-9 w-9 items-center justify-center rounded-md">
                     {ICONS[svc.id] ? (
-                      // Using TuneMyMusic icon URLs as requested
                       <img src={ICONS[svc.id]} alt={svc.name} className="h-6 w-6 object-contain" />
                     ) : (
                       <Music className="h-6 w-6" />
