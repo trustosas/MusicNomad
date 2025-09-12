@@ -11,7 +11,7 @@ export default function HomePage() {
             Transfer and sync your music across services
           </h1>
           <p className="text-base sm:text-lg text-muted-foreground">
-            Move playlists between platforms and keep your library in sync. Import from local files and export to popular formats in a few clicks.
+            Move playlists between platforms and keep your library in sync. Import from local files and export to popular services in a few clicks.
           </p>
           <div className="flex items-center justify-center gap-3 pt-2">
             <Button asChild size="lg">
