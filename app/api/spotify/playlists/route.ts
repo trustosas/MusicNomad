@@ -66,7 +66,7 @@ export async function GET() {
     id: 'liked_songs',
     name: 'Liked Songs',
     tracks_total: likedTotal,
-    image: null,
+    image: { url: 'https://cdn.builder.io/api/v1/image/assets%2F5a84b8a855a64b00a98b437c82bbab18%2Ff3fc2b477a154f1ebce84627ce795b02?format=webp&width=800' },
   })
 
   const res = NextResponse.json({ items: playlists })
