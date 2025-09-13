@@ -40,13 +40,13 @@ export async function GET(request: Request) {
 
     const res = NextResponse.redirect(new URL('/action?auth=spotify', url))
     const expiresAt = Date.now() + token.expires_in * 1000 - 30 * 1000
-    res.cookies.set(`spotify_access_token${suffix}` as const, token.access_token, { httpOnly: true, secure: true, sameSite: 'lax', path: '/', maxAge: token.expires_in })
+    res.cookies.set(`spotify_access_token${suffix}`, token.access_token, { httpOnly: true, secure: true, sameSite: 'lax', path: '/', maxAge: token.expires_in })
     if (token.refresh_token) {
-      res.cookies.set(`spotify_refresh_token${suffix}` as const, token.refresh_token, { httpOnly: true, secure: true, sameSite: 'lax', path: '/', maxAge: 60 * 60 * 24 * 30 })
+      res.cookies.set(`spotify_refresh_token${suffix}`, token.refresh_token, { httpOnly: true, secure: true, sameSite: 'lax', path: '/', maxAge: 60 * 60 * 24 * 30 })
     }
-    res.cookies.set(`spotify_expires_at${suffix}` as const, String(expiresAt), { httpOnly: true, secure: true, sameSite: 'lax', path: '/', maxAge: token.expires_in })
-    res.cookies.set(`spotify_pkce_verifier${suffix}` as const, '', { httpOnly: true, secure: true, sameSite: 'lax', path: '/', maxAge: 0 })
-    res.cookies.set(`spotify_oauth_state${suffix}` as const, '', { httpOnly: true, secure: true, sameSite: 'lax', path: '/', maxAge: 0 })
+    res.cookies.set(`spotify_expires_at${suffix}`, String(expiresAt), { httpOnly: true, secure: true, sameSite: 'lax', path: '/', maxAge: token.expires_in })
+    res.cookies.set(`spotify_pkce_verifier${suffix}`, '', { httpOnly: true, secure: true, sameSite: 'lax', path: '/', maxAge: 0 })
+    res.cookies.set(`spotify_oauth_state${suffix}`, '', { httpOnly: true, secure: true, sameSite: 'lax', path: '/', maxAge: 0 })
     return res
   } catch (e) {
     return NextResponse.redirect(new URL('/action?authError=token_exchange_failed', url))
