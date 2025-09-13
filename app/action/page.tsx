@@ -22,6 +22,7 @@ export default function ActionPage() {
   const [loadingPlaylists, setLoadingPlaylists] = useState(false)
   const [playlistError, setPlaylistError] = useState<string | null>(null)
   const [selectedPlaylists, setSelectedPlaylists] = useState<Set<string>>(new Set())
+  const [current, setCurrent] = useState(0)
 
   useEffect(() => {
     fetch('/api/spotify/me', { cache: 'no-store' })
