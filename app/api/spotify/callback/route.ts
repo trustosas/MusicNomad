@@ -8,12 +8,12 @@ export async function GET(request: Request) {
   const state = url.searchParams.get('state')
 
   if (!code || !state) {
-    return NextResponse.redirect('/action?authError=missing_code')
+    return NextResponse.redirect(new URL('/action?authError=missing_code', url))
   }
 
   const clientId = process.env.SPOTIFY_CLIENT_ID
   if (!clientId) {
-    return NextResponse.redirect('/action?authError=missing_client_id')
+    return NextResponse.redirect(new URL('/action?authError=missing_client_id', url))
   }
 
   const cookieStore = cookies()
@@ -21,7 +21,7 @@ export async function GET(request: Request) {
   const cookieState = cookieStore.get('spotify_oauth_state')?.value
 
   if (!cookieVerifier || !cookieState || cookieState !== state) {
-    return NextResponse.redirect('/action?authError=invalid_state')
+    return NextResponse.redirect(new URL('/action?authError=invalid_state', url))
   }
 
   const origin = url.origin
@@ -30,7 +30,7 @@ export async function GET(request: Request) {
   try {
     const token = await exchangeToken({ code, code_verifier: cookieVerifier, client_id: clientId, redirect_uri: redirectUri })
 
-    const res = NextResponse.redirect('/action?auth=spotify')
+    const res = NextResponse.redirect(new URL('/action?auth=spotify', url))
     const expiresAt = Date.now() + token.expires_in * 1000 - 30 * 1000
     res.cookies.set('spotify_access_token', token.access_token, { httpOnly: true, secure: true, sameSite: 'lax', path: '/', maxAge: token.expires_in })
     if (token.refresh_token) {
@@ -41,6 +41,6 @@ export async function GET(request: Request) {
     res.cookies.set('spotify_oauth_state', '', { httpOnly: true, secure: true, sameSite: 'lax', path: '/', maxAge: 0 })
     return res
   } catch (e) {
-    return NextResponse.redirect('/action?authError=token_exchange_failed')
+    return NextResponse.redirect(new URL('/action?authError=token_exchange_failed', url))
   }
 }
