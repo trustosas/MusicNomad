@@ -176,7 +176,7 @@ export default function ActionPage() {
               <Button
                 variant="link"
                 className="inline-flex items-center gap-1 text-[#7c3aed] hover:text-[#7c3aed]"
-                onClick={() => setCurrent((c) => Math.min(steps.length - 1, c + 1))}
+                onClick={() => { setLibraryOpen(false); setCurrent((c) => Math.min(steps.length - 1, c + 1)) }}
                 disabled={selectedPlaylists.size === 0}
               >
                 Next <ChevronRight className="h-4 w-4" />
