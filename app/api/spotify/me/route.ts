@@ -1,18 +1,17 @@
 import { NextResponse } from 'next/server'
+import { cookies } from 'next/headers'
 import { refreshAccessToken } from '@/lib/auth/spotify'
 
-export async function GET(request: Request) {
+export async function GET() {
   const clientId = process.env.SPOTIFY_CLIENT_ID
   if (!clientId) {
     return NextResponse.json({ error: 'Missing SPOTIFY_CLIENT_ID env' }, { status: 500 })
   }
 
-  const cookieHeader = (request as any).headers?.get?.('cookie') as string | undefined
-  const cookies = Object.fromEntries((cookieHeader || '').split(';').map((p) => p.trim().split('='))) as Record<string, string>
-
-  let accessToken = cookies['spotify_access_token']
-  const refreshToken = cookies['spotify_refresh_token']
-  const expiresAtStr = cookies['spotify_expires_at']
+  const cookieStore = cookies()
+  let accessToken = cookieStore.get('spotify_access_token')?.value
+  const refreshToken = cookieStore.get('spotify_refresh_token')?.value
+  const expiresAtStr = cookieStore.get('spotify_expires_at')?.value
   const expiresAt = expiresAtStr ? Number(expiresAtStr) : 0
 
   let updated = false
