@@ -10,10 +10,11 @@ export const dynamic = 'force-static'
 
 export default function ActionPage() {
   const [mode, setMode] = useState<'transfer' | 'sync'>('transfer')
-  const [source, setSource] = useState<'spotify' | null>(null)
+  type ServiceId = 'spotify' | 'apple' | 'youtube' | 'tidal' | 'deezer' | 'amazon'
+  const [source, setSource] = useState<ServiceId | null>(null)
 
 
-  const services: { id: 'spotify' | 'apple' | 'youtube' | 'tidal' | 'deezer' | 'amazon'; name: string; enabled: boolean }[] = [
+  const services: { id: ServiceId; name: string; enabled: boolean }[] = [
     { id: 'spotify', name: 'Spotify', enabled: true },
     { id: 'apple', name: 'Apple Music', enabled: false },
     { id: 'youtube', name: 'YouTube Music', enabled: false },
