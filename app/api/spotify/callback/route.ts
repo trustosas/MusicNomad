@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
 import { exchangeToken } from '@/lib/auth/spotify'
+export const runtime = 'nodejs'
 
 export async function GET(request: Request) {
   const url = new URL(request.url)

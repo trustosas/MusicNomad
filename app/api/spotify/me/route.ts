@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
 import { refreshAccessToken } from '@/lib/auth/spotify'
+export const runtime = 'nodejs'
 
 export async function GET() {
   const clientId = process.env.SPOTIFY_CLIENT_ID
