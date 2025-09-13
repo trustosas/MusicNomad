@@ -31,6 +31,31 @@ export default function ActionPage() {
   const [confirmedSelectedCount, setConfirmedSelectedCount] = useState(0)
 
   useEffect(() => {
+    try {
+      const params = new URLSearchParams(window.location.search)
+      const auth = params.get('auth')
+      const ctx = params.get('ctx')
+      const authError = params.get('authError')
+
+      if (auth === 'spotify') {
+        if (ctx === 'destination') {
+          setDestination('spotify')
+          setCurrent(1)
+        } else {
+          setSource('spotify')
+          setCurrent(0)
+        }
+      }
+
+      if (auth || authError || ctx) {
+        const url = new URL(window.location.href)
+        url.searchParams.delete('auth')
+        url.searchParams.delete('ctx')
+        url.searchParams.delete('authError')
+        window.history.replaceState({}, '', url.toString())
+      }
+    } catch {}
+
     fetch('/api/spotify/me?ctx=source', { cache: 'no-store' })
       .then((r) => (r.ok ? r.json() : null))
       .then((data) => { if (data) setSpotifySourceUser(data) })
