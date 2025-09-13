@@ -207,7 +207,7 @@ export default function ActionPage() {
                   if (source === 'spotify') {
                     window.location.href = '/api/spotify/auth?ctx=source'
                   }
-                }}>{spotifySourceUser ? `Signed in as ${spotifySourceUser.display_name || spotifySourceUser.id}` : 'Sign in'}</Button>
+                }}>{source === 'spotify' && spotifySourceUser ? `Signed in as ${spotifySourceUser.display_name || spotifySourceUser.id}` : 'Sign in'}</Button>
                 <Button size="lg" variant="outline" className="w-full" disabled={!spotifySourceUser} onClick={() => setLibraryOpen(true)}>{confirmedSelectedCount > 0 ? (
                   <span className="inline-flex items-center gap-2">
                     <Check className="h-4 w-4" /> Selected {confirmedSelectedCount} {confirmedSelectedCount === 1 ? 'playlist' : 'playlists'}
@@ -251,7 +251,7 @@ export default function ActionPage() {
                   if (destination === 'spotify') {
                     window.location.href = '/api/spotify/auth?ctx=destination'
                   }
-                }}>{spotifyDestUser ? `Signed in as ${spotifyDestUser.display_name || spotifyDestUser.id}` : 'Sign in'}</Button>
+                }}>{destination === 'spotify' && spotifyDestUser ? `Signed in as ${spotifyDestUser.display_name || spotifyDestUser.id}` : 'Sign in'}</Button>
               </div>
             </>
           )}
