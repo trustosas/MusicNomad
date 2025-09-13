@@ -5,9 +5,9 @@ import { exchangeToken } from '@/lib/auth/spotify'
 export async function GET(request: Request) {
   const url = new URL(request.url)
   const code = url.searchParams.get('code')
-  const state = url.searchParams.get('state')
+  const stateFull = url.searchParams.get('state')
 
-  if (!code || !state) {
+  if (!code || !stateFull) {
     return NextResponse.redirect(new URL('/action?authError=missing_code', url))
   }
 
@@ -16,11 +16,24 @@ export async function GET(request: Request) {
     return NextResponse.redirect(new URL('/action?authError=missing_client_id', url))
   }
 
-  const cookieStore = cookies()
-  const cookieVerifier = cookieStore.get('spotify_pkce_verifier')?.value
-  const cookieState = cookieStore.get('spotify_oauth_state')?.value
+  // State is in the format "<ctx>:<random>"
+  let ctx: 'source' | 'destination' = 'source'
+  let stateRaw = stateFull
+  const sepIdx = stateFull.indexOf(':')
+  if (sepIdx > 0) {
+    const maybeCtx = stateFull.slice(0, sepIdx)
+    const maybeState = stateFull.slice(sepIdx + 1)
+    if ((maybeCtx === 'source' || maybeCtx === 'destination') && maybeState) {
+      ctx = maybeCtx
+      stateRaw = maybeState
+    }
+  }
 
-  if (!cookieVerifier || !cookieState || cookieState !== state) {
+  const cookieStore = cookies()
+  const cookieVerifier = cookieStore.get(`spotify_${ctx}_pkce_verifier`)?.value || cookieStore.get('spotify_pkce_verifier')?.value
+  const cookieState = cookieStore.get(`spotify_${ctx}_oauth_state`)?.value || cookieStore.get('spotify_oauth_state')?.value
+
+  if (!cookieVerifier || !cookieState || cookieState !== stateRaw) {
     return NextResponse.redirect(new URL('/action?authError=invalid_state', url))
   }
 
@@ -30,13 +43,16 @@ export async function GET(request: Request) {
   try {
     const token = await exchangeToken({ code, code_verifier: cookieVerifier, client_id: clientId, redirect_uri: redirectUri })
 
-    const res = NextResponse.redirect(new URL('/action?auth=spotify', url))
+    const res = NextResponse.redirect(new URL(`/action?auth=spotify&ctx=${ctx}`, url))
     const expiresAt = Date.now() + token.expires_in * 1000 - 30 * 1000
-    res.cookies.set('spotify_access_token', token.access_token, { httpOnly: true, secure: true, sameSite: 'lax', path: '/', maxAge: token.expires_in })
+    res.cookies.set(`spotify_${ctx}_access_token`, token.access_token, { httpOnly: true, secure: true, sameSite: 'lax', path: '/', maxAge: token.expires_in })
     if (token.refresh_token) {
-      res.cookies.set('spotify_refresh_token', token.refresh_token, { httpOnly: true, secure: true, sameSite: 'lax', path: '/', maxAge: 60 * 60 * 24 * 30 })
+      res.cookies.set(`spotify_${ctx}_refresh_token`, token.refresh_token, { httpOnly: true, secure: true, sameSite: 'lax', path: '/', maxAge: 60 * 60 * 24 * 30 })
     }
-    res.cookies.set('spotify_expires_at', String(expiresAt), { httpOnly: true, secure: true, sameSite: 'lax', path: '/', maxAge: token.expires_in })
+    res.cookies.set(`spotify_${ctx}_expires_at`, String(expiresAt), { httpOnly: true, secure: true, sameSite: 'lax', path: '/', maxAge: token.expires_in })
+    res.cookies.set(`spotify_${ctx}_pkce_verifier`, '', { httpOnly: true, secure: true, sameSite: 'lax', path: '/', maxAge: 0 })
+    res.cookies.set(`spotify_${ctx}_oauth_state`, '', { httpOnly: true, secure: true, sameSite: 'lax', path: '/', maxAge: 0 })
+    // Clear legacy cookies if present
     res.cookies.set('spotify_pkce_verifier', '', { httpOnly: true, secure: true, sameSite: 'lax', path: '/', maxAge: 0 })
     res.cookies.set('spotify_oauth_state', '', { httpOnly: true, secure: true, sameSite: 'lax', path: '/', maxAge: 0 })
     return res
