@@ -135,7 +135,7 @@ export default function ActionPage() {
                 window.location.href = '/api/spotify/auth'
               }
             }}>{spotifyUser ? `Signed in as ${spotifyUser.display_name || spotifyUser.id}` : 'Sign in'}</Button>
-            <Button size="lg" variant="outline" className="w-full">Select content</Button>
+            <Button size="lg" variant="outline" className="w-full" disabled={!spotifyUser}>Select content</Button>
           </div>
         </div>
       </div>
