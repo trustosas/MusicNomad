@@ -208,7 +208,7 @@ export default function ActionPage() {
                     window.location.href = '/api/spotify/auth?ctx=source'
                   }
                 }}>{source === 'spotify' && spotifySourceUser ? `Signed in as ${spotifySourceUser.display_name || spotifySourceUser.id}` : 'Sign in'}</Button>
-                <Button size="lg" variant="outline" className="w-full" disabled={!spotifySourceUser} onClick={() => setLibraryOpen(true)}>{confirmedSelectedCount > 0 ? (
+                <Button size="lg" variant="outline" className="w-full" disabled={!spotifySourceUser || !source} onClick={() => setLibraryOpen(true)}>{confirmedSelectedCount > 0 ? (
                   <span className="inline-flex items-center gap-2">
                     <Check className="h-4 w-4" /> Selected {confirmedSelectedCount} {confirmedSelectedCount === 1 ? 'playlist' : 'playlists'}
                   </span>
