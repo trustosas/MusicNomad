@@ -130,6 +130,11 @@ export default function ActionPage() {
                 )
               })}
             </ol>
+            <div className="absolute right-0 top-1/2 -translate-y-1/2">
+              <Button size="sm" onClick={() => setCurrent((c) => Math.min(steps.length - 1, c + 1))} disabled={!source || current >= steps.length - 1}>
+                Next
+              </Button>
+            </div>
           </div>
         </div>
 
