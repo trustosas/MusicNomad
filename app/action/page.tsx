@@ -11,12 +11,17 @@ export const dynamic = 'force-static'
 
 type SpotifyPlaylist = { id: string; name: string; tracks_total?: number; image: { url: string; width?: number; height?: number } | null }
 
+type ServiceId = 'spotify' | 'apple' | 'youtube' | 'tidal' | 'deezer' | 'amazon'
+
+type SpotifyUser = { id: string; display_name?: string } | null
+
 export default function ActionPage() {
   const [mode, setMode] = useState<'transfer' | 'sync'>('transfer')
-  type ServiceId = 'spotify' | 'apple' | 'youtube' | 'tidal' | 'deezer' | 'amazon'
   const [source, setSource] = useState<ServiceId | null>(null)
   const [destination, setDestination] = useState<ServiceId | null>(null)
-  const [spotifyUser, setSpotifyUser] = useState<{ id: string; display_name?: string } | null>(null)
+
+  const [spotifySourceUser, setSpotifySourceUser] = useState<SpotifyUser>(null)
+  const [spotifyDestUser, setSpotifyDestUser] = useState<SpotifyUser>(null)
 
   const [libraryOpen, setLibraryOpen] = useState(false)
   const [playlists, setPlaylists] = useState<SpotifyPlaylist[]>([])
@@ -26,20 +31,23 @@ export default function ActionPage() {
   const [confirmedSelectedCount, setConfirmedSelectedCount] = useState(0)
 
   useEffect(() => {
-    fetch('/api/spotify/me', { cache: 'no-store' })
+    fetch('/api/spotify/me?ctx=source', { cache: 'no-store' })
       .then((r) => (r.ok ? r.json() : null))
-      .then((data) => {
-        if (data) setSpotifyUser(data)
-      })
+      .then((data) => { if (data) setSpotifySourceUser(data) })
+      .catch(() => {})
+
+    fetch('/api/spotify/me?ctx=destination', { cache: 'no-store' })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => { if (data) setSpotifyDestUser(data) })
       .catch(() => {})
   }, [])
 
   useEffect(() => {
     if (!libraryOpen) return
-    if (source !== 'spotify' || !spotifyUser) return
+    if (source !== 'spotify' || !spotifySourceUser) return
     setLoadingPlaylists(true)
     setPlaylistError(null)
-    fetch('/api/spotify/playlists', { cache: 'no-store' })
+    fetch('/api/spotify/playlists?ctx=source', { cache: 'no-store' })
       .then(async (r) => {
         if (!r.ok) throw new Error('Failed to load playlists')
         return r.json()
@@ -49,7 +57,7 @@ export default function ActionPage() {
       })
       .catch(() => setPlaylistError('Unable to load playlists'))
       .finally(() => setLoadingPlaylists(false))
-  }, [libraryOpen, source, spotifyUser])
+  }, [libraryOpen, source, spotifySourceUser])
 
   const togglePick = (id: string) => {
     setSelectedPlaylists((prev) => {
@@ -170,10 +178,10 @@ export default function ActionPage() {
               <div className="mt-8 mx-auto flex max-w-xs flex-col gap-3">
                 <Button size="lg" className="w-full" disabled={!source} onClick={() => {
                   if (source === 'spotify') {
-                    window.location.href = '/api/spotify/auth'
+                    window.location.href = '/api/spotify/auth?ctx=source'
                   }
-                }}>{spotifyUser ? `Signed in as ${spotifyUser.display_name || spotifyUser.id}` : 'Sign in'}</Button>
-                <Button size="lg" variant="outline" className="w-full" disabled={!spotifyUser} onClick={() => setLibraryOpen(true)}>{confirmedSelectedCount > 0 ? (
+                }}>{spotifySourceUser ? `Signed in as ${spotifySourceUser.display_name || spotifySourceUser.id}` : 'Sign in'}</Button>
+                <Button size="lg" variant="outline" className="w-full" disabled={!spotifySourceUser} onClick={() => setLibraryOpen(true)}>{confirmedSelectedCount > 0 ? (
                   <span className="inline-flex items-center gap-2">
                     <Check className="h-4 w-4" /> Selected {confirmedSelectedCount} {confirmedSelectedCount === 1 ? 'playlist' : 'playlists'}
                   </span>
@@ -214,9 +222,9 @@ export default function ActionPage() {
               <div className="mt-8 mx-auto flex max-w-xs flex-col gap-3">
                 <Button size="lg" className="w-full" disabled={!destination} onClick={() => {
                   if (destination === 'spotify') {
-                    window.location.href = '/api/spotify/auth'
+                    window.location.href = '/api/spotify/auth?ctx=destination'
                   }
-                }}>{spotifyUser ? `Signed in as ${spotifyUser.display_name || spotifyUser.id}` : 'Sign in'}</Button>
+                }}>{spotifyDestUser ? `Signed in as ${spotifyDestUser.display_name || spotifyDestUser.id}` : 'Sign in'}</Button>
               </div>
             </>
           )}
