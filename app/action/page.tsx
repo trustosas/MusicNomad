@@ -101,7 +101,8 @@ export default function ActionPage() {
                   key={svc.id}
                   type="button"
                   onClick={() => {
-                    if (svc.enabled) setSource('spotify')
+                    if (!svc.enabled) return
+                    setSource((prev) => (prev === svc.id ? null : svc.id))
                   }}
                   disabled={!svc.enabled}
                   className={[
