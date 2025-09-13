@@ -3,7 +3,7 @@
 import * as ToggleGroup from '@radix-ui/react-toggle-group'
 import { Button } from '@/components/ui/button'
 import { Check } from 'lucide-react'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 
 export const dynamic = 'force-static'
 
@@ -12,7 +12,16 @@ export default function ActionPage() {
   const [mode, setMode] = useState<'transfer' | 'sync'>('transfer')
   type ServiceId = 'spotify' | 'apple' | 'youtube' | 'tidal' | 'deezer' | 'amazon'
   const [source, setSource] = useState<ServiceId | null>(null)
+  const [spotifyUser, setSpotifyUser] = useState<{ id: string; display_name?: string } | null>(null)
 
+  useEffect(() => {
+    fetch('/api/spotify/me', { cache: 'no-store' })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => {
+        if (data) setSpotifyUser(data)
+      })
+      .catch(() => {})
+  }, [])
 
   const services: { id: ServiceId; name: string; enabled: boolean }[] = [
     { id: 'spotify', name: 'Spotify', enabled: true },
@@ -125,7 +134,7 @@ export default function ActionPage() {
               if (source === 'spotify') {
                 window.location.href = '/api/spotify/auth'
               }
-            }}>Sign in</Button>
+            }}>{spotifyUser ? `Signed in as ${spotifyUser.display_name || spotifyUser.id}` : 'Sign in'}</Button>
             <Button size="lg" variant="outline" className="w-full">Select content</Button>
           </div>
         </div>
