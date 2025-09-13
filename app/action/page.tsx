@@ -169,7 +169,15 @@ export default function ActionPage() {
                 window.location.href = '/api/spotify/auth'
               }
             }}>{spotifyUser ? `Signed in as ${spotifyUser.display_name || spotifyUser.id}` : 'Sign in'}</Button>
-            <Button size="lg" variant="outline" className="w-full" disabled={!spotifyUser} onClick={() => setLibraryOpen(true)}>Select content</Button>
+            <Button size="lg" variant="outline" className="w-full" disabled={!spotifyUser} onClick={() => setLibraryOpen(true)}>
+              {selectedPlaylists.size > 0 ? (
+                <>
+                  <Check className="h-4 w-4" /> Selected {selectedPlaylists.size} playlist{selectedPlaylists.size > 1 ? 's' : ''}
+                </>
+              ) : (
+                'Select content'
+              )}
+            </Button>
           </div>
           <div className="mt-2 mx-auto max-w-xl px-2">
             <div className="flex justify-end">
