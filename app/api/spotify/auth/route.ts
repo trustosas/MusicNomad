@@ -12,9 +12,13 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: 'Missing SPOTIFY_CLIENT_ID env' }, { status: 500 })
   }
 
+  const ctxParam = url.searchParams.get('ctx')
+  const ctx: 'source' | 'destination' = ctxParam === 'destination' ? 'destination' : 'source'
+
   const codeVerifier = generateCodeVerifier()
   const codeChallenge = generateCodeChallenge(codeVerifier)
-  const state = generateRandomString(16)
+  const stateRaw = generateRandomString(16)
+  const state = `${ctx}:${stateRaw}`
 
   const scopes = [
     'user-read-email',
@@ -34,8 +38,8 @@ export async function GET(request: Request) {
   })
 
   const res = NextResponse.redirect(authorizeUrl)
-  // Short-lived cookies for verifier/state
-  res.cookies.set('spotify_pkce_verifier', codeVerifier, { httpOnly: true, secure: true, sameSite: 'lax', path: '/', maxAge: 10 * 60 })
-  res.cookies.set('spotify_oauth_state', state, { httpOnly: true, secure: true, sameSite: 'lax', path: '/', maxAge: 10 * 60 })
+  // Short-lived cookies for verifier/state (scoped by context)
+  res.cookies.set(`spotify_${ctx}_pkce_verifier`, codeVerifier, { httpOnly: true, secure: true, sameSite: 'lax', path: '/', maxAge: 10 * 60 })
+  res.cookies.set(`spotify_${ctx}_oauth_state`, stateRaw, { httpOnly: true, secure: true, sameSite: 'lax', path: '/', maxAge: 10 * 60 })
   return res
 }
