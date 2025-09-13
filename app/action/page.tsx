@@ -22,6 +22,7 @@ export default function ActionPage() {
   const [loadingPlaylists, setLoadingPlaylists] = useState(false)
   const [playlistError, setPlaylistError] = useState<string | null>(null)
   const [selectedPlaylists, setSelectedPlaylists] = useState<Set<string>>(new Set())
+  const [confirmedSelectedCount, setConfirmedSelectedCount] = useState(0)
 
   useEffect(() => {
     fetch('/api/spotify/me', { cache: 'no-store' })
@@ -169,7 +170,11 @@ export default function ActionPage() {
                 window.location.href = '/api/spotify/auth'
               }
             }}>{spotifyUser ? `Signed in as ${spotifyUser.display_name || spotifyUser.id}` : 'Sign in'}</Button>
-            <Button size="lg" variant="outline" className="w-full" disabled={!spotifyUser} onClick={() => setLibraryOpen(true)}>Select content</Button>
+            <Button size="lg" variant="outline" className="w-full" disabled={!spotifyUser} onClick={() => setLibraryOpen(true)}>{confirmedSelectedCount > 0 ? (
+              <span className="inline-flex items-center gap-2">
+                <Check className="h-4 w-4" /> Selected {confirmedSelectedCount} {confirmedSelectedCount === 1 ? 'playlist' : 'playlists'}
+              </span>
+            ) : 'Select content'}</Button>
           </div>
           <div className="mt-2 mx-auto max-w-xl px-2">
             <div className="flex justify-end">
@@ -235,7 +240,7 @@ export default function ActionPage() {
             </div>
             <div className="shrink-0 flex items-center justify-between gap-3 border-t bg-white/70 px-4 py-3 dark:border-slate-800 dark:bg-slate-900/60">
               <div className="text-xs text-muted-foreground">{selectedPlaylists.size} selected</div>
-              <Button size="sm" onClick={() => setLibraryOpen(false)}>Done</Button>
+              <Button size="sm" onClick={() => { setConfirmedSelectedCount(selectedPlaylists.size); setLibraryOpen(false) }}>Done</Button>
             </div>
           </Dialog.Content>
         </Dialog.Portal>
