@@ -15,6 +15,7 @@ export default function ActionPage() {
   const [mode, setMode] = useState<'transfer' | 'sync'>('transfer')
   type ServiceId = 'spotify' | 'apple' | 'youtube' | 'tidal' | 'deezer' | 'amazon'
   const [source, setSource] = useState<ServiceId | null>(null)
+  const [destination, setDestination] = useState<ServiceId | null>(null)
   const [spotifyUser, setSpotifyUser] = useState<{ id: string; display_name?: string } | null>(null)
 
   const [libraryOpen, setLibraryOpen] = useState(false)
@@ -137,45 +138,89 @@ export default function ActionPage() {
         <div className="mx-auto mt-8 max-w-xl text-center">
           <p className="mt-2 text-sm text-muted-foreground">Only Spotify is available in this MVP. Others are coming soon.</p>
 
-          <div className="mt-8 grid grid-cols-2 gap-4">
-            {services.map((svc) => {
-              const isSelected = source === svc.id
-              return (
-                <button
-                  key={svc.id}
-                  type="button"
-                  onClick={() => {
-                    if (!svc.enabled) return
-                    setSource((prev) => (prev === svc.id ? null : svc.id))
-                  }}
-                  disabled={!svc.enabled}
-                  className={[
-                    'group flex items-center justify-center rounded-lg border p-4 text-center transition-colors',
-                    'bg-white/70 backdrop-blur-sm dark:bg-slate-900/40 dark:border-slate-800',
-                    svc.enabled ? 'hover:border-[#7c3aed] focus-visible:border-[#7c3aed] focus-visible:ring-[#7c3aed]/40 focus-visible:ring-[3px] outline-none' : 'opacity-50 grayscale cursor-not-allowed',
-                    isSelected ? 'ring-2 ring-[#7c3aed]/60 border-[#7c3aed]' : '',
-                  ].join(' ')}
-                  aria-pressed={isSelected}
-                >
-                  <span className={`service-icon service-icon--${svc.id}`} aria-hidden="true" />
-                  <span className="sr-only">{svc.name}</span>
-                </button>
-              )
-            })}
-          </div>
+          {current === 0 && (
+            <>
+              <div className="mt-8 grid grid-cols-2 gap-4">
+                {services.map((svc) => {
+                  const isSelected = source === svc.id
+                  return (
+                    <button
+                      key={svc.id}
+                      type="button"
+                      onClick={() => {
+                        if (!svc.enabled) return
+                        setSource((prev) => (prev === svc.id ? null : svc.id))
+                      }}
+                      disabled={!svc.enabled}
+                      className={[
+                        'group flex items-center justify-center rounded-lg border p-4 text-center transition-colors',
+                        'bg-white/70 backdrop-blur-sm dark:bg-slate-900/40 dark:border-slate-800',
+                        svc.enabled ? 'hover:border-[#7c3aed] focus-visible:border-[#7c3aed] focus-visible:ring-[#7c3aed]/40 focus-visible:ring-[3px] outline-none' : 'opacity-50 grayscale cursor-not-allowed',
+                        isSelected ? 'ring-2 ring-[#7c3aed]/60 border-[#7c3aed]' : '',
+                      ].join(' ')}
+                      aria-pressed={isSelected}
+                    >
+                      <span className={`service-icon service-icon--${svc.id}`} aria-hidden="true" />
+                      <span className="sr-only">{svc.name}</span>
+                    </button>
+                  )
+                })}
+              </div>
 
-          <div className="mt-8 mx-auto flex max-w-xs flex-col gap-3">
-            <Button size="lg" className="w-full" disabled={!source} onClick={() => {
-              if (source === 'spotify') {
-                window.location.href = '/api/spotify/auth'
-              }
-            }}>{spotifyUser ? `Signed in as ${spotifyUser.display_name || spotifyUser.id}` : 'Sign in'}</Button>
-            <Button size="lg" variant="outline" className="w-full" disabled={!spotifyUser} onClick={() => setLibraryOpen(true)}>{confirmedSelectedCount > 0 ? (
-              <span className="inline-flex items-center gap-2">
-                <Check className="h-4 w-4" /> Selected {confirmedSelectedCount} {confirmedSelectedCount === 1 ? 'playlist' : 'playlists'}
-              </span>
-            ) : 'Select content'}</Button>
-          </div>
+              <div className="mt-8 mx-auto flex max-w-xs flex-col gap-3">
+                <Button size="lg" className="w-full" disabled={!source} onClick={() => {
+                  if (source === 'spotify') {
+                    window.location.href = '/api/spotify/auth'
+                  }
+                }}>{spotifyUser ? `Signed in as ${spotifyUser.display_name || spotifyUser.id}` : 'Sign in'}</Button>
+                <Button size="lg" variant="outline" className="w-full" disabled={!spotifyUser} onClick={() => setLibraryOpen(true)}>{confirmedSelectedCount > 0 ? (
+                  <span className="inline-flex items-center gap-2">
+                    <Check className="h-4 w-4" /> Selected {confirmedSelectedCount} {confirmedSelectedCount === 1 ? 'playlist' : 'playlists'}
+                  </span>
+                ) : 'Select content'}</Button>
+              </div>
+            </>
+          )}
+
+          {current === 1 && (
+            <>
+              <div className="mt-8 grid grid-cols-2 gap-4">
+                {services.map((svc) => {
+                  const isSelected = destination === svc.id
+                  return (
+                    <button
+                      key={svc.id}
+                      type="button"
+                      onClick={() => {
+                        if (!svc.enabled) return
+                        setDestination((prev) => (prev === svc.id ? null : svc.id))
+                      }}
+                      disabled={!svc.enabled}
+                      className={[
+                        'group flex items-center justify-center rounded-lg border p-4 text-center transition-colors',
+                        'bg-white/70 backdrop-blur-sm dark:bg-slate-900/40 dark:border-slate-800',
+                        svc.enabled ? 'hover:border-[#7c3aed] focus-visible:border-[#7c3aed] focus-visible:ring-[#7c3aed]/40 focus-visible:ring-[3px] outline-none' : 'opacity-50 grayscale cursor-not-allowed',
+                        isSelected ? 'ring-2 ring-[#7c3aed]/60 border-[#7c3aed]' : '',
+                      ].join(' ')}
+                      aria-pressed={isSelected}
+                    >
+                      <span className={`service-icon service-icon--${svc.id}`} aria-hidden="true" />
+                      <span className="sr-only">{svc.name}</span>
+                    </button>
+                  )
+                })}
+              </div>
+
+              <div className="mt-8 mx-auto flex max-w-xs flex-col gap-3">
+                <Button size="lg" className="w-full" disabled={!destination} onClick={() => {
+                  if (destination === 'spotify') {
+                    window.location.href = '/api/spotify/auth'
+                  }
+                }}>{spotifyUser ? `Signed in as ${spotifyUser.display_name || spotifyUser.id}` : 'Sign in'}</Button>
+              </div>
+            </>
+          )}
+
           <div className="mt-2 mx-auto max-w-xl px-2">
             <div className="flex items-center justify-between gap-2">
               <Button
@@ -190,7 +235,7 @@ export default function ActionPage() {
                 variant="link"
                 className="inline-flex items-center gap-1 text-[#7c3aed] hover:text-[#7c3aed]"
                 onClick={() => { setLibraryOpen(false); setCurrent((c) => Math.min(steps.length - 1, c + 1)) }}
-                disabled={selectedPlaylists.size === 0}
+                disabled={current === 0 ? !source : current === 1 ? !destination : false}
               >
                 Next <ChevronRight className="h-4 w-4" />
               </Button>
