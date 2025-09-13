@@ -3,7 +3,7 @@
 import * as ToggleGroup from '@radix-ui/react-toggle-group'
 import * as Dialog from '@radix-ui/react-dialog'
 import { Button } from '@/components/ui/button'
-import { Check } from 'lucide-react'
+import { Check, ChevronRight } from 'lucide-react'
 import { useState, useEffect } from 'react'
 
 export const dynamic = 'force-static'
