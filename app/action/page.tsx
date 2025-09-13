@@ -177,12 +177,12 @@ export default function ActionPage() {
       <Dialog.Root open={libraryOpen} onOpenChange={(o) => setLibraryOpen(o)}>
         <Dialog.Portal>
           <Dialog.Overlay className="fixed inset-0 bg-black/40 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0" />
-          <Dialog.Content className="fixed left-1/2 top-1/2 z-50 w-[95vw] max-w-2xl -translate-x-1/2 -translate-y-1/2 rounded-xl border bg-white/70 p-0 text-left shadow-xl backdrop-blur-sm focus:outline-none dark:bg-slate-900/60 dark:border-slate-800">
+          <Dialog.Content className="fixed left-1/2 top-1/2 z-50 w-[95vw] max-w-2xl max-h-[80vh] -translate-x-1/2 -translate-y-1/2 rounded-xl border bg-white/70 p-0 text-left shadow-xl backdrop-blur-sm focus:outline-none dark:bg-slate-900/60 dark:border-slate-800 flex flex-col">
             <div className="p-5 border-b dark:border-slate-800">
               <Dialog.Title className="text-lg font-semibold">Your playlists</Dialog.Title>
               <Dialog.Description className="text-sm text-muted-foreground">Choose the playlists to transfer</Dialog.Description>
             </div>
-            <div className="max-h-[50vh] overflow-auto p-3">
+            <div className="flex-1 overflow-auto p-3">
               {loadingPlaylists && (
                 <div className="p-6 text-center text-sm text-muted-foreground">Loading playlists...</div>
               )}
@@ -221,7 +221,7 @@ export default function ActionPage() {
                 })}
               </ul>
             </div>
-            <div className="sticky bottom-0 flex items-center justify-between gap-3 border-t bg-white/70 px-4 py-3 dark:border-slate-800 dark:bg-slate-900/60">
+            <div className="shrink-0 flex items-center justify-between gap-3 border-t bg-white/70 px-4 py-3 dark:border-slate-800 dark:bg-slate-900/60">
               <div className="text-xs text-muted-foreground">{selectedPlaylists.size} selected</div>
               <Button size="sm" onClick={() => setLibraryOpen(false)}>Done</Button>
             </div>
