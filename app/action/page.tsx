@@ -17,6 +17,7 @@ export default function ActionPage() {
   const [source, setSource] = useState<ServiceId | null>(null)
   const [destination, setDestination] = useState<ServiceId | null>(null)
   const [spotifyUser, setSpotifyUser] = useState<{ id: string; display_name?: string } | null>(null)
+  const [spotifyDestUser, setSpotifyDestUser] = useState<{ id: string; display_name?: string } | null>(null)
 
   const [libraryOpen, setLibraryOpen] = useState(false)
   const [playlists, setPlaylists] = useState<SpotifyPlaylist[]>([])
@@ -30,6 +31,13 @@ export default function ActionPage() {
       .then((r) => (r.ok ? r.json() : null))
       .then((data) => {
         if (data) setSpotifyUser(data)
+      })
+      .catch(() => {})
+
+    fetch('/api/spotify/me?instance=dest', { cache: 'no-store' })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => {
+        if (data) setSpotifyDestUser(data)
       })
       .catch(() => {})
   }, [])
@@ -214,9 +222,9 @@ export default function ActionPage() {
               <div className="mt-8 mx-auto flex max-w-xs flex-col gap-3">
                 <Button size="lg" className="w-full" disabled={!destination} onClick={() => {
                   if (destination === 'spotify') {
-                    window.location.href = '/api/spotify/auth'
+                    window.location.href = '/api/spotify/auth?instance=dest'
                   }
-                }}>{spotifyUser ? `Signed in as ${spotifyUser.display_name || spotifyUser.id}` : 'Sign in'}</Button>
+                }}>{spotifyDestUser ? `Signed in as ${spotifyDestUser.display_name || spotifyDestUser.id}` : 'Sign in'}</Button>
               </div>
             </>
           )}

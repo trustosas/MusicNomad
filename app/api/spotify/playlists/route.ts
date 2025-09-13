@@ -2,16 +2,20 @@ import { NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
 import { refreshAccessToken } from '@/lib/auth/spotify'
 
-export async function GET() {
+export async function GET(request: Request) {
   const clientId = process.env.SPOTIFY_CLIENT_ID
   if (!clientId) {
     return NextResponse.json({ error: 'Missing SPOTIFY_CLIENT_ID env' }, { status: 500 })
   }
 
+  const url = new URL(request.url)
+  const instance = url.searchParams.get('instance') === 'dest' ? 'dest' : 'src'
+  const suffix = instance === 'dest' ? '_dest' : ''
+
   const cookieStore = cookies()
-  let accessToken = cookieStore.get('spotify_access_token')?.value
-  const refreshToken = cookieStore.get('spotify_refresh_token')?.value
-  const expiresAtStr = cookieStore.get('spotify_expires_at')?.value
+  let accessToken = cookieStore.get(`spotify_access_token${suffix}`)?.value
+  const refreshToken = cookieStore.get(`spotify_refresh_token${suffix}`)?.value
+  const expiresAtStr = cookieStore.get(`spotify_expires_at${suffix}`)?.value
   const expiresAt = expiresAtStr ? Number(expiresAtStr) : 0
 
   let updated = false
@@ -72,11 +76,11 @@ export async function GET() {
   const res = NextResponse.json({ items: playlists })
   if (updated) {
     const maxAge = Math.max(0, Math.floor((newExpiresAt - Date.now()) / 1000))
-    res.cookies.set('spotify_access_token', accessToken, { httpOnly: true, secure: true, sameSite: 'lax', path: '/', maxAge })
+    res.cookies.set(`spotify_access_token${suffix}` as const, accessToken, { httpOnly: true, secure: true, sameSite: 'lax', path: '/', maxAge })
     if (newRefreshToken) {
-      res.cookies.set('spotify_refresh_token', newRefreshToken, { httpOnly: true, secure: true, sameSite: 'lax', path: '/', maxAge: 60 * 60 * 24 * 30 })
+      res.cookies.set(`spotify_refresh_token${suffix}` as const, newRefreshToken, { httpOnly: true, secure: true, sameSite: 'lax', path: '/', maxAge: 60 * 60 * 24 * 30 })
     }
-    res.cookies.set('spotify_expires_at', String(newExpiresAt), { httpOnly: true, secure: true, sameSite: 'lax', path: '/', maxAge })
+    res.cookies.set(`spotify_expires_at${suffix}` as const, String(newExpiresAt), { httpOnly: true, secure: true, sameSite: 'lax', path: '/', maxAge })
   }
   return res
 }
