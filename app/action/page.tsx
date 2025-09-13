@@ -177,7 +177,7 @@ export default function ActionPage() {
             ) : 'Select content'}</Button>
           </div>
           <div className="mt-2 mx-auto max-w-xl px-2">
-            <div className="flex justify-end gap-2">
+            <div className="flex justify-between">
               <Button
                 variant="link"
                 className="inline-flex items-center gap-1 text-[#7c3aed] hover:text-[#7c3aed]"
