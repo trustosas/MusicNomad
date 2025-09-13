@@ -3,7 +3,7 @@
 import * as ToggleGroup from '@radix-ui/react-toggle-group'
 import * as Dialog from '@radix-ui/react-dialog'
 import { Button } from '@/components/ui/button'
-import { Check, ChevronRight } from 'lucide-react'
+import { Check, ChevronLeft, ChevronRight } from 'lucide-react'
 import { useState, useEffect } from 'react'
 
 export const dynamic = 'force-static'
@@ -177,7 +177,15 @@ export default function ActionPage() {
             ) : 'Select content'}</Button>
           </div>
           <div className="mt-2 mx-auto max-w-xl px-2">
-            <div className="flex justify-end">
+            <div className="flex justify-end gap-2">
+              <Button
+                variant="link"
+                className="inline-flex items-center gap-1 text-[#7c3aed] hover:text-[#7c3aed]"
+                onClick={() => setCurrent((c) => Math.max(0, c - 1))}
+                disabled={current === 0}
+              >
+                <ChevronLeft className="h-4 w-4" /> Back
+              </Button>
               <Button
                 variant="link"
                 className="inline-flex items-center gap-1 text-[#7c3aed] hover:text-[#7c3aed]"
