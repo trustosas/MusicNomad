@@ -1,6 +1,7 @@
 'use client'
 
 import * as ToggleGroup from '@radix-ui/react-toggle-group'
+import * as Dialog from '@radix-ui/react-dialog'
 import { Button } from '@/components/ui/button'
 import { Check } from 'lucide-react'
 import { useState, useEffect } from 'react'
@@ -8,11 +9,19 @@ import { useState, useEffect } from 'react'
 export const dynamic = 'force-static'
 
 
+type SpotifyPlaylist = { id: string; name: string; tracks_total?: number; image: { url: string; width?: number; height?: number } | null }
+
 export default function ActionPage() {
   const [mode, setMode] = useState<'transfer' | 'sync'>('transfer')
   type ServiceId = 'spotify' | 'apple' | 'youtube' | 'tidal' | 'deezer' | 'amazon'
   const [source, setSource] = useState<ServiceId | null>(null)
   const [spotifyUser, setSpotifyUser] = useState<{ id: string; display_name?: string } | null>(null)
+
+  const [libraryOpen, setLibraryOpen] = useState(false)
+  const [playlists, setPlaylists] = useState<SpotifyPlaylist[]>([])
+  const [loadingPlaylists, setLoadingPlaylists] = useState(false)
+  const [playlistError, setPlaylistError] = useState<string | null>(null)
+  const [selectedPlaylists, setSelectedPlaylists] = useState<Set<string>>(new Set())
 
   useEffect(() => {
     fetch('/api/spotify/me', { cache: 'no-store' })
@@ -22,6 +31,32 @@ export default function ActionPage() {
       })
       .catch(() => {})
   }, [])
+
+  useEffect(() => {
+    if (!libraryOpen) return
+    if (source !== 'spotify' || !spotifyUser) return
+    setLoadingPlaylists(true)
+    setPlaylistError(null)
+    fetch('/api/spotify/playlists', { cache: 'no-store' })
+      .then(async (r) => {
+        if (!r.ok) throw new Error('Failed to load playlists')
+        return r.json()
+      })
+      .then((data) => {
+        setPlaylists((data?.items || []) as SpotifyPlaylist[])
+      })
+      .catch(() => setPlaylistError('Unable to load playlists'))
+      .finally(() => setLoadingPlaylists(false))
+  }, [libraryOpen, source, spotifyUser])
+
+  const togglePick = (id: string) => {
+    setSelectedPlaylists((prev) => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+  }
 
   const services: { id: ServiceId; name: string; enabled: boolean }[] = [
     { id: 'spotify', name: 'Spotify', enabled: true },
@@ -66,7 +101,6 @@ export default function ActionPage() {
           </ToggleGroup.Root>
         </div>
 
-        {/* Flow widget: step circles */}
         <div className="mx-auto mt-10 max-w-2xl px-2">
           <div className="relative">
             <ol className="relative z-10 flex items-center justify-between gap-3 text-[11px]">
@@ -135,10 +169,65 @@ export default function ActionPage() {
                 window.location.href = '/api/spotify/auth'
               }
             }}>{spotifyUser ? `Signed in as ${spotifyUser.display_name || spotifyUser.id}` : 'Sign in'}</Button>
-            <Button size="lg" variant="outline" className="w-full" disabled={!spotifyUser}>Select content</Button>
+            <Button size="lg" variant="outline" className="w-full" disabled={!spotifyUser} onClick={() => setLibraryOpen(true)}>Select content</Button>
           </div>
         </div>
       </div>
+
+      <Dialog.Root open={libraryOpen} onOpenChange={(o) => setLibraryOpen(o)}>
+        <Dialog.Portal>
+          <Dialog.Overlay className="fixed inset-0 bg-black/40 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0" />
+          <Dialog.Content className="fixed left-1/2 top-1/2 z-50 w-[95vw] max-w-2xl -translate-x-1/2 -translate-y-1/2 rounded-xl border bg-white/70 p-0 text-left shadow-xl backdrop-blur-sm focus:outline-none dark:bg-slate-900/60 dark:border-slate-800">
+            <div className="p-5 border-b dark:border-slate-800">
+              <Dialog.Title className="text-lg font-semibold">Your playlists</Dialog.Title>
+              <Dialog.Description className="text-sm text-muted-foreground">Choose the playlists to transfer</Dialog.Description>
+            </div>
+            <div className="max-h-[50vh] overflow-auto p-3">
+              {loadingPlaylists && (
+                <div className="p-6 text-center text-sm text-muted-foreground">Loading playlists...</div>
+              )}
+              {!loadingPlaylists && playlistError && (
+                <div className="p-6 text-center text-sm text-red-600 dark:text-red-400">{playlistError}</div>
+              )}
+              {!loadingPlaylists && !playlistError && playlists.length === 0 && (
+                <div className="p-6 text-center text-sm text-muted-foreground">No playlists found</div>
+              )}
+              <ul className="space-y-1">
+                {playlists.map((pl) => {
+                  const checked = selectedPlaylists.has(pl.id)
+                  return (
+                    <li key={pl.id}>
+                      <button type="button" onClick={() => togglePick(pl.id)} className={[
+                        'flex w-full items-center gap-3 rounded-lg border px-3 py-2 text-left transition-colors',
+                        'bg-white/50 hover:border-[#7c3aed] dark:bg-slate-900/30 dark:border-slate-800',
+                        checked ? 'ring-1 ring-[#7c3aed] border-[#7c3aed]' : '',
+                      ].join(' ')}>
+                        <input type="checkbox" checked={checked} onChange={() => togglePick(pl.id)} className="pointer-events-none" />
+                        <div className="flex min-w-0 flex-1 items-center gap-3">
+                          {pl.image ? (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img src={pl.image.url} alt="" className="h-8 w-8 rounded object-cover" />
+                          ) : (
+                            <div className="h-8 w-8 rounded bg-[#7c3aed]/10" />
+                          )}
+                          <div className="min-w-0 flex-1">
+                            <div className="truncate text-sm font-medium">{pl.name}</div>
+                            <div className="text-xs text-muted-foreground">{typeof pl.tracks_total === 'number' ? `${pl.tracks_total} tracks` : 'Playlist'}</div>
+                          </div>
+                        </div>
+                      </button>
+                    </li>
+                  )
+                })}
+              </ul>
+            </div>
+            <div className="sticky bottom-0 flex items-center justify-between gap-3 border-t bg-white/70 px-4 py-3 dark:border-slate-800 dark:bg-slate-900/60">
+              <div className="text-xs text-muted-foreground">{selectedPlaylists.size} selected</div>
+              <Button size="sm" onClick={() => setLibraryOpen(false)}>Done</Button>
+            </div>
+          </Dialog.Content>
+        </Dialog.Portal>
+      </Dialog.Root>
     </div>
   )
 }
