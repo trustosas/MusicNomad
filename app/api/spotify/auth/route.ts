@@ -4,6 +4,8 @@ import { buildAuthorizeUrl, generateCodeChallenge, generateCodeVerifier, generat
 export async function GET(request: Request) {
   const url = new URL(request.url)
   const origin = url.origin
+  const instance = url.searchParams.get('instance') === 'dest' ? 'dest' : 'src'
+  const suffix = instance === 'dest' ? '_dest' : ''
 
   const clientId = process.env.SPOTIFY_CLIENT_ID
   const redirectUri = process.env.SPOTIFY_REDIRECT_URI || `${origin}/api/spotify/callback`
