@@ -37,7 +37,7 @@ export async function GET(request: Request) {
 
   const res = NextResponse.redirect(authorizeUrl)
   // Short-lived cookies for verifier/state
-  res.cookies.set(`spotify_pkce_verifier${suffix}` as const, codeVerifier, { httpOnly: true, secure: true, sameSite: 'lax', path: '/', maxAge: 10 * 60 })
-  res.cookies.set(`spotify_oauth_state${suffix}` as const, state, { httpOnly: true, secure: true, sameSite: 'lax', path: '/', maxAge: 10 * 60 })
+  res.cookies.set(`spotify_pkce_verifier${suffix}`, codeVerifier, { httpOnly: true, secure: true, sameSite: 'lax', path: '/', maxAge: 10 * 60 })
+  res.cookies.set(`spotify_oauth_state${suffix}`, state, { httpOnly: true, secure: true, sameSite: 'lax', path: '/', maxAge: 10 * 60 })
   return res
 }
