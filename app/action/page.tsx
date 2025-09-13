@@ -171,6 +171,18 @@ export default function ActionPage() {
             }}>{spotifyUser ? `Signed in as ${spotifyUser.display_name || spotifyUser.id}` : 'Sign in'}</Button>
             <Button size="lg" variant="outline" className="w-full" disabled={!spotifyUser} onClick={() => setLibraryOpen(true)}>Select content</Button>
           </div>
+          <div className="mt-2 mx-auto max-w-xl px-2">
+            <div className="flex justify-end">
+              <Button
+                variant="link"
+                className="inline-flex items-center gap-1 text-[#7c3aed] hover:text-[#7c3aed]"
+                onClick={() => setCurrent((c) => Math.min(steps.length - 1, c + 1))}
+                disabled={selectedPlaylists.size === 0}
+              >
+                Next <ChevronRight className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
         </div>
       </div>
 
