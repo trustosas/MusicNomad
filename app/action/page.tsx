@@ -30,7 +30,7 @@ export default function ActionPage() {
   const [selectedPlaylists, setSelectedPlaylists] = useState<Set<string>>(new Set())
   const [confirmedSelectedCount, setConfirmedSelectedCount] = useState(0)
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     try {
       const params = new URLSearchParams(window.location.search)
       const auth = params.get('auth')
@@ -55,7 +55,9 @@ export default function ActionPage() {
         window.history.replaceState({}, '', url.toString())
       }
     } catch {}
+  }, [])
 
+  useEffect(() => {
     fetch('/api/spotify/me?ctx=source', { cache: 'no-store' })
       .then((r) => (r.ok ? r.json() : null))
       .then((data) => { if (data) setSpotifySourceUser(data) })
