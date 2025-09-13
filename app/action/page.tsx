@@ -15,6 +15,7 @@ export default function ActionPage() {
   const [mode, setMode] = useState<'transfer' | 'sync'>('transfer')
   type ServiceId = 'spotify' | 'apple' | 'youtube' | 'tidal' | 'deezer' | 'amazon'
   const [source, setSource] = useState<ServiceId | null>(null)
+  const [destination, setDestination] = useState<ServiceId | null>(null)
   const [spotifyUser, setSpotifyUser] = useState<{ id: string; display_name?: string } | null>(null)
 
   const [libraryOpen, setLibraryOpen] = useState(false)
@@ -139,14 +140,18 @@ export default function ActionPage() {
 
           <div className="mt-8 grid grid-cols-2 gap-4">
             {services.map((svc) => {
-              const isSelected = source === svc.id
+              const isSelected = (current === 0 ? source : destination) === svc.id
               return (
                 <button
                   key={svc.id}
                   type="button"
                   onClick={() => {
                     if (!svc.enabled) return
-                    setSource((prev) => (prev === svc.id ? null : svc.id))
+                    if (current === 0) {
+                      setSource((prev) => (prev === svc.id ? null : svc.id))
+                    } else {
+                      setDestination((prev) => (prev === svc.id ? null : svc.id))
+                    }
                   }}
                   disabled={!svc.enabled}
                   className={[
@@ -165,16 +170,19 @@ export default function ActionPage() {
           </div>
 
           <div className="mt-8 mx-auto flex max-w-xs flex-col gap-3">
-            <Button size="lg" className="w-full" disabled={!source} onClick={() => {
-              if (source === 'spotify') {
+            <Button size="lg" className="w-full" disabled={current === 0 ? !source : !destination} onClick={() => {
+              const target = current === 0 ? source : destination
+              if (target === 'spotify') {
                 window.location.href = '/api/spotify/auth'
               }
             }}>{spotifyUser ? `Signed in as ${spotifyUser.display_name || spotifyUser.id}` : 'Sign in'}</Button>
-            <Button size="lg" variant="outline" className="w-full" disabled={!spotifyUser} onClick={() => setLibraryOpen(true)}>{confirmedSelectedCount > 0 ? (
-              <span className="inline-flex items-center gap-2">
-                <Check className="h-4 w-4" /> Selected {confirmedSelectedCount} {confirmedSelectedCount === 1 ? 'playlist' : 'playlists'}
-              </span>
-            ) : 'Select content'}</Button>
+            {current === 0 && (
+              <Button size="lg" variant="outline" className="w-full" disabled={!spotifyUser} onClick={() => setLibraryOpen(true)}>{confirmedSelectedCount > 0 ? (
+                <span className="inline-flex items-center gap-2">
+                  <Check className="h-4 w-4" /> Selected {confirmedSelectedCount} {confirmedSelectedCount === 1 ? 'playlist' : 'playlists'}
+                </span>
+              ) : 'Select content'}</Button>
+            )}
           </div>
           <div className="mt-2 mx-auto max-w-xl px-2">
             <div className="flex justify-between">
@@ -190,7 +198,7 @@ export default function ActionPage() {
                 variant="link"
                 className="inline-flex items-center gap-1 text-[#7c3aed] hover:text-[#7c3aed]"
                 onClick={() => { setLibraryOpen(false); setCurrent((c) => Math.min(steps.length - 1, c + 1)) }}
-                disabled={selectedPlaylists.size === 0}
+                disabled={current === 0 ? confirmedSelectedCount === 0 : false}
               >
                 Next <ChevronRight className="h-4 w-4" />
               </Button>
