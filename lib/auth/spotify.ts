@@ -60,3 +60,28 @@ export async function exchangeToken(opts: {
 
   return (await res.json()) as SpotifyTokenResponse
 }
+
+export async function refreshAccessToken(opts: {
+  refresh_token: string
+  client_id: string
+}): Promise<SpotifyTokenResponse> {
+  const body = new URLSearchParams({
+    grant_type: 'refresh_token',
+    refresh_token: opts.refresh_token,
+    client_id: opts.client_id,
+  })
+
+  const res = await fetch('https://accounts.spotify.com/api/token', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body,
+    cache: 'no-store',
+  })
+
+  if (!res.ok) {
+    const txt = await res.text().catch(() => '')
+    throw new Error(`Spotify token refresh failed: ${res.status} ${res.statusText} ${txt}`)
+  }
+
+  return (await res.json()) as SpotifyTokenResponse
+}
