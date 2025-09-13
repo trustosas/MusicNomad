@@ -2,7 +2,6 @@ import { NextResponse } from 'next/server'
 import { refreshAccessToken } from '@/lib/auth/spotify'
 
 export async function GET(request: Request) {
-  const url = new URL(request.url)
   const clientId = process.env.SPOTIFY_CLIENT_ID
   if (!clientId) {
     return NextResponse.json({ error: 'Missing SPOTIFY_CLIENT_ID env' }, { status: 500 })
@@ -16,23 +15,19 @@ export async function GET(request: Request) {
   const expiresAtStr = cookies['spotify_expires_at']
   const expiresAt = expiresAtStr ? Number(expiresAtStr) : 0
 
-  // Refresh if expired and refresh token available
+  let updated = false
+  let newExpiresAt = expiresAt
+  let newRefreshToken: string | undefined
+
   if ((!accessToken || Date.now() >= expiresAt) && refreshToken) {
     try {
       const refreshed = await refreshAccessToken({ refresh_token: refreshToken, client_id: clientId })
       accessToken = refreshed.access_token
-      const res = NextResponse.next()
-      const newExpiresAt = Date.now() + refreshed.expires_in * 1000 - 30 * 1000
-      res.cookies.set('spotify_access_token', refreshed.access_token, { httpOnly: true, secure: true, sameSite: 'lax', path: '/', maxAge: refreshed.expires_in })
-      if (refreshed.refresh_token) {
-        res.cookies.set('spotify_refresh_token', refreshed.refresh_token, { httpOnly: true, secure: true, sameSite: 'lax', path: '/', maxAge: 60 * 60 * 24 * 30 })
-      }
-      res.cookies.set('spotify_expires_at', String(newExpiresAt), { httpOnly: true, secure: true, sameSite: 'lax', path: '/', maxAge: refreshed.expires_in })
-      // Continue after setting cookies by returning res and chaining fetch would end the request; instead, merge cookies into response at the end.
-      // We'll carry the Set-Cookie headers by collecting them and re-setting on final response.
-      // For simplicity, we won't rely on these cookies immediately in this handler.
-    } catch (e) {
-      // fall through; will try with existing token if any
+      newExpiresAt = Date.now() + refreshed.expires_in * 1000 - 30 * 1000
+      newRefreshToken = refreshed.refresh_token
+      updated = true
+    } catch {
+      // ignore and fall back to existing access token (likely invalid)
     }
   }
 
@@ -56,5 +51,15 @@ export async function GET(request: Request) {
     email: (me.email as string | undefined) || undefined,
     product: (me.product as string | undefined) || undefined,
   }
-  return NextResponse.json(out)
+
+  const res = NextResponse.json(out)
+  if (updated) {
+    const maxAge = Math.max(0, Math.floor((newExpiresAt - Date.now()) / 1000))
+    res.cookies.set('spotify_access_token', accessToken, { httpOnly: true, secure: true, sameSite: 'lax', path: '/', maxAge })
+    if (newRefreshToken) {
+      res.cookies.set('spotify_refresh_token', newRefreshToken, { httpOnly: true, secure: true, sameSite: 'lax', path: '/', maxAge: 60 * 60 * 24 * 30 })
+    }
+    res.cookies.set('spotify_expires_at', String(newExpiresAt), { httpOnly: true, secure: true, sameSite: 'lax', path: '/', maxAge })
+  }
+  return res
 }
