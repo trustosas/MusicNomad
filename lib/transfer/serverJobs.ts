@@ -1,4 +1,3 @@
-import { cookies } from 'next/headers'
 import { refreshAccessToken } from '@/lib/auth/spotify'
 import crypto from 'crypto'
 
