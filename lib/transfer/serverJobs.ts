@@ -25,6 +25,12 @@ export type TransferJobState = {
 
 export type StartTransferInput = {
   playlists: { id: string; name: string }[]
+  auth: {
+    sourceAccessToken: string
+    sourceRefreshToken?: string
+    destAccessToken: string
+    destRefreshToken?: string
+  }
 }
 
 const jobs = new Map<string, TransferJobState>()
@@ -34,26 +40,18 @@ function log(job: TransferJobState, line: string) {
   job.updatedAt = Date.now()
 }
 
-async function getSpotifyAccessToken(ctx: 'source' | 'destination'): Promise<string | null> {
+async function ensureToken(current: string | undefined, refresh?: string): Promise<string | null> {
   const clientId = process.env.SPOTIFY_CLIENT_ID
-  if (!clientId) return null
-  const cookieStore = cookies()
-  let accessToken = cookieStore.get(`spotify_${ctx}_access_token`)?.value || cookieStore.get('spotify_access_token')?.value || null
-  const refreshToken = cookieStore.get(`spotify_${ctx}_refresh_token`)?.value || cookieStore.get('spotify_refresh_token')?.value || null
-  const expiresAtStr = cookieStore.get(`spotify_${ctx}_expires_at`)?.value || cookieStore.get('spotify_expires_at')?.value
-  const expiresAt = expiresAtStr ? Number(expiresAtStr) : 0
-
-  if ((!accessToken || Date.now() >= expiresAt) && refreshToken) {
+  if (current) return current
+  if (refresh && clientId) {
     try {
-      const refreshed = await refreshAccessToken({ refresh_token: refreshToken, client_id: clientId })
-      accessToken = refreshed.access_token
-      // We only need the refreshed access token for this job scope; do not attempt to persist cookies here
+      const refreshed = await refreshAccessToken({ refresh_token: refresh, client_id: clientId })
+      return refreshed.access_token
     } catch {
-      // ignore
+      return null
     }
   }
-
-  return accessToken
+  return null
 }
 
 async function spotifyMe(token: string) {
@@ -148,8 +146,8 @@ async function addTracksInBatches(token: string, playlistId: string, uris: strin
 }
 
 async function runSpotifyToSpotify(job: TransferJobState, input: StartTransferInput) {
-  const sourceToken = await getSpotifyAccessToken('source')
-  const destToken = await getSpotifyAccessToken('destination')
+  const sourceToken = await ensureToken(input.auth.sourceAccessToken, input.auth.sourceRefreshToken)
+  const destToken = await ensureToken(input.auth.destAccessToken, input.auth.destRefreshToken)
   if (!sourceToken || !destToken) {
     job.status = 'failed'
     job.items.forEach((it) => { it.status = 'failed'; it.error = 'Not authenticated'; })
