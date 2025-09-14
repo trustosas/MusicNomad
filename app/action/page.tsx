@@ -107,7 +107,6 @@ export default function ActionPage() {
   const steps: { label: string }[] = [
     { label: 'Select source' },
     { label: 'Select destination' },
-    { label: 'Review details' },
     { label: 'Start transfer' },
   ]
   const [current, setCurrent] = useState(0)
@@ -259,7 +258,7 @@ export default function ActionPage() {
           {current === 2 && (
             <div className="mt-8 text-left">
               <div className="rounded-xl border bg-white/70 p-5 backdrop-blur-sm dark:border-slate-800 dark:bg-slate-900/40">
-                <div className="text-base font-semibold">Review details</div>
+                <div className="text-base font-semibold">Start transfer</div>
                 <div className="mt-1 text-sm text-muted-foreground">Confirm the source account, selected playlists, and destination account.</div>
                 <div className="mt-5 grid gap-4">
                   <div className="rounded-lg border bg-white/50 p-4 dark:border-slate-800 dark:bg-slate-900/30">
@@ -314,6 +313,11 @@ export default function ActionPage() {
                     </div>
                   </div>
                 </div>
+              </div>
+              <div className="mt-4 flex justify-center">
+                <Button size="lg" type="button" disabled={!source || !destination || playlists.filter((pl) => selectedPlaylists.has(pl.id)).length === 0 || (source === 'spotify' && !spotifySourceUser) || (destination === 'spotify' && !spotifyDestUser)}>
+                  Start transfer
+                </Button>
               </div>
             </div>
           )}
