@@ -115,6 +115,46 @@ export default function ActionPage() {
   ]
   const [current, setCurrent] = useState(0)
 
+  const [jobId, setJobId] = useState<string | null>(null)
+  const [job, setJob] = useState<TransferState | null>(null)
+  const [starting, setStarting] = useState(false)
+  const [startError, setStartError] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (!jobId) return
+    let timer: number | null = null
+    const poll = async () => {
+      try {
+        const res = await fetch(`/api/transfer/status?id=${encodeURIComponent(jobId)}`, { cache: 'no-store' })
+        if (res.ok) {
+          const data = await res.json()
+          setJob(data)
+          if (data.status === 'completed' || data.status === 'failed') return
+        }
+      } catch {}
+      timer = window.setTimeout(poll, 1000)
+    }
+    poll()
+    return () => { if (timer) window.clearTimeout(timer) }
+  }, [jobId])
+
+  const startTransfer = async () => {
+    setStartError(null)
+    setStarting(true)
+    try {
+      const selectedList = playlists.filter((pl) => selectedPlaylists.has(pl.id)).map((pl) => ({ id: pl.id, name: pl.name }))
+      const res = await fetch('/api/transfer/start', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ playlists: selectedList }) })
+      if (!res.ok) throw new Error('Failed to start transfer')
+      const data = await res.json()
+      setJobId(data.id)
+      setJob(data.state)
+    } catch (e: any) {
+      setStartError(e?.message || 'Unable to start transfer')
+    } finally {
+      setStarting(false)
+    }
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-950 dark:to-slate-900">
       <div className="container mx-auto px-4 py-16">
