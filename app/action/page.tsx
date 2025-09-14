@@ -15,6 +15,10 @@ type ServiceId = 'spotify' | 'apple' | 'youtube' | 'tidal' | 'deezer' | 'amazon'
 
 type SpotifyUser = { id: string; display_name?: string } | null
 
+type TransferItem = { playlistId: string; playlistName: string; status: 'pending' | 'running' | 'completed' | 'failed'; total: number; added: number; message?: string; error?: string }
+
+type TransferState = { id: string; status: 'queued' | 'running' | 'completed' | 'failed'; createdAt: number; updatedAt: number; logs: string[]; items: TransferItem[] }
+
 export default function ActionPage() {
   const [mode, setMode] = useState<'transfer' | 'sync'>('transfer')
   const [source, setSource] = useState<ServiceId | null>(null)
