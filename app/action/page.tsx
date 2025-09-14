@@ -121,15 +121,56 @@ export default function ActionPage() {
   const [startError, setStartError] = useState<string | null>(null)
 
   useEffect(() => {
+    try {
+      let id: string | null = null
+      if (typeof window !== 'undefined') {
+        id = window.localStorage.getItem('active_transfer_job_id')
+        if (!id) {
+          const found = document.cookie.split('; ').find((r) => r.startsWith('active_transfer_job_id='))
+          if (found) id = decodeURIComponent(found.split('=')[1] || '')
+        }
+      }
+      if (id) {
+        setJobId(id)
+        setCurrent(2)
+      }
+    } catch {}
+  }, [])
+
+  useEffect(() => {
+    if (!jobId) return
+    try {
+      if (typeof window !== 'undefined') {
+        window.localStorage.setItem('active_transfer_job_id', jobId)
+        document.cookie = `active_transfer_job_id=${encodeURIComponent(jobId)}; path=/; max-age=86400`
+      }
+    } catch {}
+  }, [jobId])
+
+  useEffect(() => {
     if (!jobId) return
     let timer: number | null = null
+    const clearPersisted = () => {
+      try {
+        if (typeof window !== 'undefined') {
+          window.localStorage.removeItem('active_transfer_job_id')
+          document.cookie = 'active_transfer_job_id=; Max-Age=0; path=/'
+        }
+      } catch {}
+    }
     const poll = async () => {
       try {
         const res = await fetch(`/api/transfer/status?id=${encodeURIComponent(jobId)}`, { cache: 'no-store' })
         if (res.ok) {
           const data = await res.json()
           setJob(data)
-          if (data.status === 'completed' || data.status === 'failed') return
+          if (data.status === 'completed' || data.status === 'failed') {
+            clearPersisted()
+            return
+          }
+        } else if (res.status === 404) {
+          clearPersisted()
+          return
         }
       } catch {}
       timer = window.setTimeout(poll, 1000)
@@ -148,6 +189,13 @@ export default function ActionPage() {
       const data = await res.json()
       setJobId(data.id)
       setJob(data.state)
+      setCurrent(2)
+      try {
+        if (typeof window !== 'undefined') {
+          window.localStorage.setItem('active_transfer_job_id', data.id)
+          document.cookie = `active_transfer_job_id=${encodeURIComponent(data.id)}; path=/; max-age=86400`
+        }
+      } catch {}
     } catch (e: any) {
       setStartError(e?.message || 'Unable to start transfer')
     } finally {
