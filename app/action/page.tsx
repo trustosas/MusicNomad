@@ -256,6 +256,68 @@ export default function ActionPage() {
             </>
           )}
 
+          {current === 2 && (
+            <div className="mt-8 text-left">
+              <div className="rounded-xl border bg-white/70 p-5 backdrop-blur-sm dark:border-slate-800 dark:bg-slate-900/40">
+                <div className="text-base font-semibold">Review details</div>
+                <div className="mt-1 text-sm text-muted-foreground">Confirm the source account, selected playlists, and destination account.</div>
+                <div className="mt-5 grid gap-4">
+                  <div className="rounded-lg border bg-white/50 p-4 dark:border-slate-800 dark:bg-slate-900/30">
+                    <div className="text-xs uppercase tracking-wide text-muted-foreground">Source account</div>
+                    <div className="mt-2 flex items-center gap-3">
+                      {source ? <span className={`service-icon service-icon--${source}`} aria-hidden="true" /> : <span className="h-8 w-8 rounded bg-[#7c3aed]/10" />}
+                      <div className="min-w-0">
+                        <div className="text-sm font-medium">{source ? (source === 'spotify' ? 'Spotify' : source) : 'Not selected'}</div>
+                        <div className="truncate text-xs text-muted-foreground">{source === 'spotify' && spotifySourceUser ? (spotifySourceUser.display_name || spotifySourceUser.id) : 'Not signed in'}</div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="rounded-lg border bg-white/50 p-4 dark:border-slate-800 dark:bg-slate-900/30">
+                    <div className="text-xs uppercase tracking-wide text-muted-foreground">Playlists to transfer</div>
+                    <div className="mt-2">
+                      {(() => {
+                        const selectedList = playlists.filter((pl) => selectedPlaylists.has(pl.id))
+                        if (selectedList.length === 0) {
+                          return <div className="text-sm text-muted-foreground">No playlists selected</div>
+                        }
+                        return (
+                          <div className="flex flex-wrap gap-2">
+                            {selectedList.map((pl) => (
+                              <span key={pl.id} className="inline-flex items-center gap-2 rounded-full border bg-white/70 px-3 py-1 text-xs dark:border-slate-800 dark:bg-slate-900/40">
+                                {pl.id === 'liked_songs' ? (
+                                  // eslint-disable-next-line @next/next/no-img-element
+                                  <img src="https://cdn.builder.io/api/v1/image/assets%2F672bd2452a84448ea16383bbff6a43d6%2F533ea5db8ac54bf58d52fcac265b743a?format=webp&width=800" alt="" className="h-4 w-4 rounded object-cover" />
+                                ) : pl.image?.url ? (
+                                  // eslint-disable-next-line @next/next/no-img-element
+                                  <img src={pl.image.url} alt="" className="h-4 w-4 rounded object-cover" />
+                                ) : (
+                                  <span className="h-4 w-4 rounded bg-[#7c3aed]/10" />
+                                )}
+                                <span className="truncate max-w-[12rem]">{pl.name}</span>
+                              </span>
+                            ))}
+                          </div>
+                        )
+                      })()}
+                    </div>
+                  </div>
+
+                  <div className="rounded-lg border bg-white/50 p-4 dark:border-slate-800 dark:bg-slate-900/30">
+                    <div className="text-xs uppercase tracking-wide text-muted-foreground">Destination account</div>
+                    <div className="mt-2 flex items-center gap-3">
+                      {destination ? <span className={`service-icon service-icon--${destination}`} aria-hidden="true" /> : <span className="h-8 w-8 rounded bg-[#7c3aed]/10" />}
+                      <div className="min-w-0">
+                        <div className="text-sm font-medium">{destination ? (destination === 'spotify' ? 'Spotify' : destination) : 'Not selected'}</div>
+                        <div className="truncate text-xs text-muted-foreground">{destination === 'spotify' && spotifyDestUser ? (spotifyDestUser.display_name || spotifyDestUser.id) : 'Not signed in'}</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
           <div className="mt-2 mx-auto max-w-xl px-2">
             <div className="flex items-center justify-between gap-2">
               <Button
