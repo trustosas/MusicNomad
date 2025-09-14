@@ -359,10 +359,38 @@ export default function ActionPage() {
                 </div>
               </div>
               <div className="mt-4 flex justify-center">
-                <Button size="lg" type="button" disabled={!source || !destination || playlists.filter((pl) => selectedPlaylists.has(pl.id)).length === 0 || (source === 'spotify' && !spotifySourceUser) || (destination === 'spotify' && !spotifyDestUser)}>
-                  Start transfer
+                <Button size="lg" type="button" onClick={startTransfer} disabled={starting || !source || !destination || playlists.filter((pl) => selectedPlaylists.has(pl.id)).length === 0 || (source === 'spotify' && !spotifySourceUser) || (destination === 'spotify' && !spotifyDestUser)}>
+                  {starting ? 'Starting...' : 'Start transfer'}
                 </Button>
               </div>
+              {startError && (
+                <div className="mt-3 text-center text-sm text-red-600 dark:text-red-400">{startError}</div>
+              )}
+              {job && (
+                <div className="mt-6 rounded-xl border bg-white/70 p-5 backdrop-blur-sm dark:border-slate-800 dark:bg-slate-900/40">
+                  <div className="text-base font-semibold">Transfer progress</div>
+                  <div className="mt-1 text-sm text-muted-foreground">Status: {job.status}</div>
+                  <div className="mt-4 space-y-3">
+                    {job.items.map((it) => (
+                      <div key={it.playlistId} className="rounded-lg border bg-white/50 p-3 dark:border-slate-800 dark:bg-slate-900/30">
+                        <div className="flex items-center justify-between gap-3">
+                          <div className="min-w-0">
+                            <div className="truncate text-sm font-medium">{it.playlistName}</div>
+                            <div className="text-xs text-muted-foreground">{it.status === 'running' ? `${it.added}/${it.total}` : it.status}</div>
+                          </div>
+                          <div className="w-40 h-2 rounded bg-slate-200 dark:bg-slate-800 overflow-hidden">
+                            <div className="h-full bg-[#7c3aed]" style={{ width: it.total > 0 ? `${Math.round((it.added / it.total) * 100)}%` : '0%' }} />
+                          </div>
+                        </div>
+                        {it.error && <div className="mt-2 text-xs text-red-600 dark:text-red-400">{it.error}</div>}
+                      </div>
+                    ))}
+                  </div>
+                  <div className="mt-4 rounded-lg border bg-white/50 p-3 text-xs dark:border-slate-800 dark:bg-slate-900/30 max-h-40 overflow-auto">
+                    {job.logs.length === 0 ? <div className="text-muted-foreground">No logs yet</div> : job.logs.map((l, i) => (<div key={i}>{l}</div>))}
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
