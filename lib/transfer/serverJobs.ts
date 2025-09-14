@@ -46,14 +46,7 @@ async function getSpotifyAccessToken(ctx: 'source' | 'destination'): Promise<str
     try {
       const refreshed = await refreshAccessToken({ refresh_token: refreshToken, client_id: clientId })
       accessToken = refreshed.access_token
-      const newExpiresAt = Date.now() + refreshed.expires_in * 1000 - 30 * 1000
-      const maxAge = Math.max(0, Math.floor((newExpiresAt - Date.now()) / 1000))
-      // Update cookies with new tokens
-      cookies().set(`spotify_${ctx}_access_token`, accessToken, { httpOnly: true, secure: true, sameSite: 'lax', path: '/', maxAge })
-      if (refreshed.refresh_token) {
-        cookies().set(`spotify_${ctx}_refresh_token`, refreshed.refresh_token, { httpOnly: true, secure: true, sameSite: 'lax', path: '/', maxAge: 60 * 60 * 24 * 30 })
-      }
-      cookies().set(`spotify_${ctx}_expires_at`, String(newExpiresAt), { httpOnly: true, secure: true, sameSite: 'lax', path: '/', maxAge })
+      // We only need the refreshed access token for this job scope; do not attempt to persist cookies here
     } catch {
       // ignore
     }
