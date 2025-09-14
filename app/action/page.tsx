@@ -300,6 +300,7 @@ export default function ActionPage() {
               <ul className="space-y-1">
                 {playlists.map((pl) => {
                   const checked = selectedPlaylists.has(pl.id)
+                  const artworkUrl = pl.id === 'liked_songs' ? 'https://cdn.builder.io/api/v1/image/assets%2F672bd2452a84448ea16383bbff6a43d6%2F533ea5db8ac54bf58d52fcac265b743a?format=webp&width=800' : (pl.image?.url || null)
                   return (
                     <li key={pl.id}>
                       <button type="button" onClick={() => togglePick(pl.id)} className={[
@@ -309,9 +310,9 @@ export default function ActionPage() {
                       ].join(' ')}>
                         <input type="checkbox" checked={checked} onChange={() => togglePick(pl.id)} className="pointer-events-none" />
                         <div className="flex min-w-0 flex-1 items-center gap-3">
-                          {pl.image ? (
+                          {artworkUrl ? (
                             // eslint-disable-next-line @next/next/no-img-element
-                            <img src={pl.image.url} alt="" className="h-8 w-8 rounded object-cover" />
+                            <img src={artworkUrl} alt="" className="h-8 w-8 rounded object-cover" />
                           ) : (
                             <div className="h-8 w-8 rounded bg-[#7c3aed]/10" />
                           )}
