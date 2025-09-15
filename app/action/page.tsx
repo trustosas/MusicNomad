@@ -34,6 +34,14 @@ export default function ActionPage() {
   const [selectedPlaylists, setSelectedPlaylists] = useState<Set<string>>(new Set())
   const [confirmedSelectedCount, setConfirmedSelectedCount] = useState(0)
 
+  // Destination playlist picker (sync mode)
+  const [destLibraryOpen, setDestLibraryOpen] = useState(false)
+  const [destPlaylists, setDestPlaylists] = useState<SpotifyPlaylist[]>([])
+  const [loadingDestPlaylists, setLoadingDestPlaylists] = useState(false)
+  const [destPlaylistError, setDestPlaylistError] = useState<string | null>(null)
+  const [selectedDestPlaylist, setSelectedDestPlaylist] = useState<string | null>(null)
+  const [confirmedDestSelected, setConfirmedDestSelected] = useState(false)
+
   useEffect(() => {
     if (mode === 'sync') {
       setSelectedPlaylists((prev) => {
