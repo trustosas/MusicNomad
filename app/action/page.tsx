@@ -392,6 +392,15 @@ export default function ActionPage() {
                     window.location.href = '/api/spotify/auth?ctx=destination'
                   }
                 }}>{destination === 'spotify' && spotifyDestUser ? `Signed in as ${spotifyDestUser.display_name || spotifyDestUser.id}` : 'Sign in'}</Button>
+                {mode === 'sync' && (
+                  <Button size="lg" variant="outline" className="w-full" disabled={!spotifyDestUser || !destination} onClick={() => setDestLibraryOpen(true)}>
+                    {confirmedDestSelected && selectedDestPlaylist ? (
+                      <span className="inline-flex items-center gap-2">
+                        <Check className="h-4 w-4" /> Selected 1 playlist
+                      </span>
+                    ) : 'Select content destination'}
+                  </Button>
+                )}
               </div>
             </>
           )}
