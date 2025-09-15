@@ -109,6 +109,23 @@ export default function ActionPage() {
       .finally(() => setLoadingPlaylists(false))
   }, [libraryOpen, source, spotifySourceUser])
 
+  useEffect(() => {
+    if (!destLibraryOpen) return
+    if (destination !== 'spotify' || !spotifyDestUser) return
+    setLoadingDestPlaylists(true)
+    setDestPlaylistError(null)
+    fetch('/api/spotify/playlists?ctx=destination', { cache: 'no-store' })
+      .then(async (r) => {
+        if (!r.ok) throw new Error('Failed to load playlists')
+        return r.json()
+      })
+      .then((data) => {
+        setDestPlaylists((data?.items || []) as SpotifyPlaylist[])
+      })
+      .catch(() => setDestPlaylistError('Unable to load playlists'))
+      .finally(() => setLoadingDestPlaylists(false))
+  }, [destLibraryOpen, destination, spotifyDestUser])
+
   const togglePick = (id: string) => {
     setSelectedPlaylists((prev) => {
       const next = new Set(prev)
