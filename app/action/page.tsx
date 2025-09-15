@@ -578,6 +578,61 @@ export default function ActionPage() {
           </Dialog.Content>
         </Dialog.Portal>
       </Dialog.Root>
+
+      <Dialog.Root open={destLibraryOpen} onOpenChange={(o) => setDestLibraryOpen(o)}>
+        <Dialog.Portal>
+          <Dialog.Overlay className="fixed inset-0 bg-black/40 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0" />
+          <Dialog.Content className="fixed left-1/2 top-1/2 z-50 w-[95vw] max-w-2xl max-h-[80vh] -translate-x-1/2 -translate-y-1/2 rounded-xl border bg-white/70 p-0 text-left shadow-xl backdrop-blur-sm focus:outline-none dark:bg-slate-900/60 dark:border-slate-800 flex flex-col">
+            <div className="p-5 border-b dark:border-slate-800">
+              <Dialog.Title className="text-lg font-semibold">Destination playlists</Dialog.Title>
+              <Dialog.Description className="text-sm text-muted-foreground">Choose the playlist to sync into</Dialog.Description>
+            </div>
+            <div className="flex-1 overflow-auto p-3">
+              {loadingDestPlaylists && (
+                <div className="p-6 text-center text-sm text-muted-foreground">Loading playlists...</div>
+              )}
+              {!loadingDestPlaylists && destPlaylistError && (
+                <div className="p-6 text-center text-sm text-red-600 dark:text-red-400">{destPlaylistError}</div>
+              )}
+              {!loadingDestPlaylists && !destPlaylistError && destPlaylists.filter((pl) => pl.id !== 'liked_songs').length === 0 && (
+                <div className="p-6 text-center text-sm text-muted-foreground">No playlists found</div>
+              )}
+              <ul className="space-y-1">
+                {destPlaylists.filter((pl) => pl.id !== 'liked_songs').map((pl) => {
+                  const checked = selectedDestPlaylist === pl.id
+                  const artworkUrl = pl.image?.url || null
+                  return (
+                    <li key={pl.id}>
+                      <button type="button" onClick={() => togglePickDest(pl.id)} className={[
+                        'flex w-full items-center gap-3 rounded-lg border px-3 py-2 text-left transition-colors',
+                        'bg-white/50 hover:border-[#7c3aed] dark:bg-slate-900/30 dark:border-slate-800',
+                        checked ? 'ring-1 ring-[#7c3aed] border-[#7c3aed]' : '',
+                      ].join(' ')}>
+                        <input type="radio" name="playlist-pick-destination" checked={checked} onChange={() => togglePickDest(pl.id)} className="pointer-events-none" />
+                        <div className="flex min-w-0 flex-1 items-center gap-3">
+                          {artworkUrl ? (
+                            <img src={artworkUrl} alt="" className="h-8 w-8 rounded object-cover" />
+                          ) : (
+                            <div className="h-8 w-8 rounded bg-[#7c3aed]/10" />
+                          )}
+                          <div className="min-w-0 flex-1">
+                            <div className="truncate text-sm font-medium">{pl.name}</div>
+                            <div className="text-xs text-muted-foreground">{typeof pl.tracks_total === 'number' ? `${pl.tracks_total} tracks` : 'Playlist'}</div>
+                          </div>
+                        </div>
+                      </button>
+                    </li>
+                  )
+                })}
+              </ul>
+            </div>
+            <div className="shrink-0 flex items-center justify-between gap-3 border-t bg-white/70 px-4 py-3 dark:border-slate-800 dark:bg-slate-900/60">
+              <div className="text-xs text-muted-foreground">{selectedDestPlaylist ? 1 : 0} selected</div>
+              <Button size="sm" onClick={() => { setConfirmedDestSelected(!!selectedDestPlaylist); setDestLibraryOpen(false) }}>Done</Button>
+            </div>
+          </Dialog.Content>
+        </Dialog.Portal>
+      </Dialog.Root>
     </div>
   )
 }
