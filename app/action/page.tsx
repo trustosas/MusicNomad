@@ -34,6 +34,17 @@ export default function ActionPage() {
   const [selectedPlaylists, setSelectedPlaylists] = useState<Set<string>>(new Set())
   const [confirmedSelectedCount, setConfirmedSelectedCount] = useState(0)
 
+  useEffect(() => {
+    if (mode === 'sync') {
+      setSelectedPlaylists((prev) => {
+        if (prev.size <= 1) return prev
+        const first = prev.values().next().value as string
+        return new Set([first])
+      })
+      setConfirmedSelectedCount((c) => Math.min(c, 1))
+    }
+  }, [mode])
+
   useLayoutEffect(() => {
     try {
       const params = new URLSearchParams(window.location.search)
@@ -93,6 +104,15 @@ export default function ActionPage() {
   const togglePick = (id: string) => {
     setSelectedPlaylists((prev) => {
       const next = new Set(prev)
+      if (mode === 'sync') {
+        if (next.has(id)) {
+          next.delete(id)
+        } else {
+          next.clear()
+          next.add(id)
+        }
+        return next
+      }
       if (next.has(id)) next.delete(id)
       else next.add(id)
       return next
@@ -494,7 +514,7 @@ export default function ActionPage() {
                         'bg-white/50 hover:border-[#7c3aed] dark:bg-slate-900/30 dark:border-slate-800',
                         checked ? 'ring-1 ring-[#7c3aed] border-[#7c3aed]' : '',
                       ].join(' ')}>
-                        <input type="checkbox" checked={checked} onChange={() => togglePick(pl.id)} className="pointer-events-none" />
+                        <input type={mode === 'sync' ? 'radio' : 'checkbox'} name="playlist-pick" checked={checked} onChange={() => togglePick(pl.id)} className="pointer-events-none" />
                         <div className="flex min-w-0 flex-1 items-center gap-3">
                           {artworkUrl ? (
                             // eslint-disable-next-line @next/next/no-img-element
