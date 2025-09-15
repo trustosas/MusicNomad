@@ -594,13 +594,15 @@ export default function ActionPage() {
               {!loadingDestPlaylists && destPlaylistError && (
                 <div className="p-6 text-center text-sm text-red-600 dark:text-red-400">{destPlaylistError}</div>
               )}
-              {!loadingDestPlaylists && !destPlaylistError && destPlaylists.filter((pl) => pl.id !== 'liked_songs').length === 0 && (
+              {!loadingDestPlaylists && !destPlaylistError && destPlaylists.length === 0 && (
                 <div className="p-6 text-center text-sm text-muted-foreground">No playlists found</div>
               )}
               <ul className="space-y-1">
-                {destPlaylists.filter((pl) => pl.id !== 'liked_songs').map((pl) => {
+                {destPlaylists.map((pl) => {
                   const checked = selectedDestPlaylist === pl.id
-                  const artworkUrl = pl.image?.url || null
+                  const artworkUrl = pl.id === 'liked_songs'
+                    ? 'https://cdn.builder.io/api/v1/image/assets%2F672bd2452a84448ea16383bbff6a43d6%2F533ea5db8ac54bf58d52fcac265b743a?format=webp&width=800'
+                    : (pl.image?.url || null)
                   return (
                     <li key={pl.id}>
                       <button type="button" onClick={() => togglePickDest(pl.id)} className={[
