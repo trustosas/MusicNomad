@@ -160,7 +160,7 @@ export default function ActionPage() {
   const steps: { label: string }[] = [
     { label: 'Select source' },
     { label: 'Select destination' },
-    { label: 'Start transfer' },
+    { label: mode === 'sync' ? 'Start sync' : 'Start transfer' },
   ]
   const [current, setCurrent] = useState(0)
 
@@ -408,7 +408,7 @@ export default function ActionPage() {
           {current === 2 && (
             <div className="mt-8 text-left">
               <div className="rounded-xl border bg-white/70 p-5 backdrop-blur-sm dark:border-slate-800 dark:bg-slate-900/40">
-                <div className="text-base font-semibold">Start transfer</div>
+                <div className="text-base font-semibold">{mode === 'sync' ? 'Start sync' : 'Start transfer'}</div>
                 <div className="mt-1 text-sm text-muted-foreground">Confirm the source account, selected playlists, and destination account.</div>
                 <div className="mt-5 grid gap-4">
                   <div className="rounded-lg border bg-white/50 p-4 dark:border-slate-800 dark:bg-slate-900/30">
@@ -422,35 +422,88 @@ export default function ActionPage() {
                     </div>
                   </div>
 
-                  <div className="rounded-lg border bg-white/50 p-4 dark:border-slate-800 dark:bg-slate-900/30">
-                    <div className="text-xs uppercase tracking-wide text-muted-foreground">Playlists to transfer</div>
-                    <div className="mt-2">
-                      {(() => {
-                        const selectedList = playlists.filter((pl) => selectedPlaylists.has(pl.id))
-                        if (selectedList.length === 0) {
-                          return <div className="text-sm text-muted-foreground">No playlists selected</div>
-                        }
-                        return (
-                          <div className="flex flex-wrap gap-2">
-                            {selectedList.map((pl) => (
-                              <span key={pl.id} className="inline-flex items-center gap-2 rounded-full border bg-white/70 px-3 py-1 text-xs dark:border-slate-800 dark:bg-slate-900/40">
+                  {mode === 'sync' ? (
+                    <>
+                      <div className="rounded-lg border bg-white/50 p-4 dark:border-slate-800 dark:bg-slate-900/30">
+                        <div className="text-xs uppercase tracking-wide text-muted-foreground">Source playlist</div>
+                        <div className="mt-2">
+                          {(() => {
+                            const selectedList = playlists.filter((pl) => selectedPlaylists.has(pl.id))
+                            if (selectedList.length === 0) {
+                              return <div className="text-sm text-muted-foreground">No playlist selected</div>
+                            }
+                            const pl = selectedList[0]
+                            return (
+                              <span className="inline-flex items-center gap-2 rounded-full border bg-white/70 px-3 py-1 text-xs dark:border-slate-800 dark:bg-slate-900/40">
                                 {pl.id === 'liked_songs' ? (
-                                  // eslint-disable-next-line @next/next/no-img-element
                                   <img src="https://cdn.builder.io/api/v1/image/assets%2F672bd2452a84448ea16383bbff6a43d6%2F533ea5db8ac54bf58d52fcac265b743a?format=webp&width=800" alt="" className="h-4 w-4 rounded object-cover" />
                                 ) : pl.image?.url ? (
-                                  // eslint-disable-next-line @next/next/no-img-element
                                   <img src={pl.image.url} alt="" className="h-4 w-4 rounded object-cover" />
                                 ) : (
                                   <span className="h-4 w-4 rounded bg-[#7c3aed]/10" />
                                 )}
                                 <span className="truncate max-w-[12rem]">{pl.name}</span>
                               </span>
-                            ))}
-                          </div>
-                        )
-                      })()}
+                            )
+                          })()}
+                        </div>
+                      </div>
+
+                      <div className="rounded-lg border bg-white/50 p-4 dark:border-slate-800 dark:bg-slate-900/30">
+                        <div className="text-xs uppercase tracking-wide text-muted-foreground">Destination playlist</div>
+                        <div className="mt-2">
+                          {(() => {
+                            const pl = destPlaylists.find((p) => p.id === selectedDestPlaylist) || null
+                            if (!pl) {
+                              return <div className="text-sm text-muted-foreground">No playlist selected</div>
+                            }
+                            return (
+                              <span className="inline-flex items-center gap-2 rounded-full border bg-white/70 px-3 py-1 text-xs dark:border-slate-800 dark:bg-slate-900/40">
+                                {pl.id === 'liked_songs' ? (
+                                  <img src="https://cdn.builder.io/api/v1/image/assets%2F672bd2452a84448ea16383bbff6a43d6%2F533ea5db8ac54bf58d52fcac265b743a?format=webp&width=800" alt="" className="h-4 w-4 rounded object-cover" />
+                                ) : pl.image?.url ? (
+                                  <img src={pl.image.url} alt="" className="h-4 w-4 rounded object-cover" />
+                                ) : (
+                                  <span className="h-4 w-4 rounded bg-[#7c3aed]/10" />
+                                )}
+                                <span className="truncate max-w-[12rem]">{pl.name}</span>
+                              </span>
+                            )
+                          })()}
+                        </div>
+                      </div>
+                    </>
+                  ) : (
+                    <div className="rounded-lg border bg-white/50 p-4 dark:border-slate-800 dark:bg-slate-900/30">
+                      <div className="text-xs uppercase tracking-wide text-muted-foreground">Playlists to transfer</div>
+                      <div className="mt-2">
+                        {(() => {
+                          const selectedList = playlists.filter((pl) => selectedPlaylists.has(pl.id))
+                          if (selectedList.length === 0) {
+                            return <div className="text-sm text-muted-foreground">No playlists selected</div>
+                          }
+                          return (
+                            <div className="flex flex-wrap gap-2">
+                              {selectedList.map((pl) => (
+                                <span key={pl.id} className="inline-flex items-center gap-2 rounded-full border bg-white/70 px-3 py-1 text-xs dark:border-slate-800 dark:bg-slate-900/40">
+                                  {pl.id === 'liked_songs' ? (
+                                    // eslint-disable-next-line @next/next/no-img-element
+                                    <img src="https://cdn.builder.io/api/v1/image/assets%2F672bd2452a84448ea16383bbff6a43d6%2F533ea5db8ac54bf58d52fcac265b743a?format=webp&width=800" alt="" className="h-4 w-4 rounded object-cover" />
+                                  ) : pl.image?.url ? (
+                                    // eslint-disable-next-line @next/next/no-img-element
+                                    <img src={pl.image.url} alt="" className="h-4 w-4 rounded object-cover" />
+                                  ) : (
+                                    <span className="h-4 w-4 rounded bg-[#7c3aed]/10" />
+                                  )}
+                                  <span className="truncate max-w-[12rem]">{pl.name}</span>
+                                </span>
+                              ))}
+                            </div>
+                          )
+                        })()}
+                      </div>
                     </div>
-                  </div>
+                  )}
 
                   <div className="rounded-lg border bg-white/50 p-4 dark:border-slate-800 dark:bg-slate-900/30">
                     <div className="text-xs uppercase tracking-wide text-muted-foreground">Destination account</div>
@@ -465,8 +518,8 @@ export default function ActionPage() {
                 </div>
               </div>
               <div className="mt-4 flex justify-center">
-                <Button size="lg" type="button" onClick={startTransfer} disabled={starting || !source || !destination || playlists.filter((pl) => selectedPlaylists.has(pl.id)).length === 0 || (source === 'spotify' && !spotifySourceUser) || (destination === 'spotify' && !spotifyDestUser)}>
-                  {starting ? 'Starting...' : 'Start transfer'}
+                <Button size="lg" type="button" onClick={startTransfer} disabled={starting || !source || !destination || playlists.filter((pl) => selectedPlaylists.has(pl.id)).length === 0 || (mode === 'sync' && !selectedDestPlaylist) || (source === 'spotify' && !spotifySourceUser) || (destination === 'spotify' && !spotifyDestUser)}>
+                  {starting ? 'Starting...' : (mode === 'sync' ? 'Start sync' : 'Start transfer')}
                 </Button>
               </div>
               {startError && (
