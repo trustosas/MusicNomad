@@ -144,6 +144,10 @@ export default function ActionPage() {
     })
   }
 
+  const togglePickDest = (id: string) => {
+    setSelectedDestPlaylist((prev) => (prev === id ? null : id))
+  }
+
   const services: { id: ServiceId; name: string; enabled: boolean }[] = [
     { id: 'spotify', name: 'Spotify', enabled: true },
     { id: 'apple', name: 'Apple Music', enabled: false },
