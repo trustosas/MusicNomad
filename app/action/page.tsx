@@ -19,8 +19,11 @@ type TransferItem = { playlistId: string; playlistName: string; status: 'pending
 
 type TransferState = { id: string; status: 'queued' | 'running' | 'completed' | 'failed'; createdAt: number; updatedAt: number; logs: string[]; items: TransferItem[] }
 
+type SyncMode = 'one_way' | 'two_way'
+
 export default function ActionPage() {
   const [mode, setMode] = useState<'transfer' | 'sync'>('transfer')
+  const [syncMode, setSyncMode] = useState<SyncMode>('one_way')
   const [source, setSource] = useState<ServiceId | null>(null)
   const [destination, setDestination] = useState<ServiceId | null>(null)
 
@@ -34,7 +37,6 @@ export default function ActionPage() {
   const [selectedPlaylists, setSelectedPlaylists] = useState<Set<string>>(new Set())
   const [confirmedSelectedCount, setConfirmedSelectedCount] = useState(0)
 
-  // Destination playlist picker (sync mode)
   const [destLibraryOpen, setDestLibraryOpen] = useState(false)
   const [destPlaylists, setDestPlaylists] = useState<SpotifyPlaylist[]>([])
   const [loadingDestPlaylists, setLoadingDestPlaylists] = useState(false)
@@ -252,6 +254,33 @@ export default function ActionPage() {
     }
   }
 
+  const startSync = async () => {
+    setStartError(null)
+    setStarting(true)
+    try {
+      const src = playlists.find((pl) => selectedPlaylists.has(pl.id))
+      const dst = destPlaylists.find((p) => p.id === selectedDestPlaylist) || null
+      if (!src || !dst) throw new Error('Select source and destination playlists')
+      const body = { source: { id: src.id, name: src.name }, destination: { id: dst.id, name: dst.name }, mode: syncMode }
+      const res = await fetch('/api/sync/start', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
+      if (!res.ok) throw new Error('Failed to start sync')
+      const data = await res.json()
+      setJobId(data.id)
+      setJob(data.state)
+      setCurrent(2)
+      try {
+        if (typeof window !== 'undefined') {
+          window.localStorage.setItem('active_transfer_job_id', data.id)
+          document.cookie = `active_transfer_job_id=${encodeURIComponent(data.id)}; path=/; max-age=86400`
+        }
+      } catch {}
+    } catch (e: any) {
+      setStartError(e?.message || 'Unable to start sync')
+    } finally {
+      setStarting(false)
+    }
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-950 dark:to-slate-900">
       <div className="container mx-auto px-4 py-16">
@@ -410,6 +439,20 @@ export default function ActionPage() {
               <div className="rounded-xl border bg-white/70 p-5 backdrop-blur-sm dark:border-slate-800 dark:bg-slate-900/40">
                 <div className="text-base font-semibold">{mode === 'sync' ? 'Start sync' : 'Start transfer'}</div>
                 <div className="mt-1 text-sm text-muted-foreground">Confirm the source account, selected playlists, and destination account.</div>
+                {mode === 'sync' && (
+                  <div className="mt-4 flex items-center justify-center">
+                    <ToggleGroup.Root
+                      type="single"
+                      value={syncMode}
+                      onValueChange={(v) => v && setSyncMode(v as SyncMode)}
+                      aria-label="Sync mode"
+                      className="inline-flex rounded-full border bg-white/70 p-1 backdrop-blur-sm dark:border-slate-800 dark:bg-slate-900/40"
+                    >
+                      <ToggleGroup.Item value="one_way" className="rounded-full px-5 py-2 text-sm font-medium text-slate-700 transition-colors data-[state=on]:bg-[#7c3aed] data-[state=on]:text-white dark:text-slate-200">One way</ToggleGroup.Item>
+                      <ToggleGroup.Item value="two_way" className="rounded-full px-5 py-2 text-sm font-medium text-slate-700 transition-colors data-[state=on]:bg-[#7c3aed] data-[state=on]:text-white dark:text-slate-200">Two way</ToggleGroup.Item>
+                    </ToggleGroup.Root>
+                  </div>
+                )}
                 <div className="mt-5 grid gap-4">
                   <div className="rounded-lg border bg-white/50 p-4 dark:border-slate-800 dark:bg-slate-900/30">
                     <div className="text-xs uppercase tracking-wide text-muted-foreground">Source account</div>
@@ -487,10 +530,8 @@ export default function ActionPage() {
                               {selectedList.map((pl) => (
                                 <span key={pl.id} className="inline-flex items-center gap-2 rounded-full border bg-white/70 px-3 py-1 text-xs dark:border-slate-800 dark:bg-slate-900/40">
                                   {pl.id === 'liked_songs' ? (
-                                    // eslint-disable-next-line @next/next/no-img-element
                                     <img src="https://cdn.builder.io/api/v1/image/assets%2F672bd2452a84448ea16383bbff6a43d6%2F533ea5db8ac54bf58d52fcac265b743a?format=webp&width=800" alt="" className="h-4 w-4 rounded object-cover" />
                                   ) : pl.image?.url ? (
-                                    // eslint-disable-next-line @next/next/no-img-element
                                     <img src={pl.image.url} alt="" className="h-4 w-4 rounded object-cover" />
                                   ) : (
                                     <span className="h-4 w-4 rounded bg-[#7c3aed]/10" />
@@ -518,7 +559,7 @@ export default function ActionPage() {
                 </div>
               </div>
               <div className="mt-4 flex justify-center">
-                <Button size="lg" type="button" onClick={startTransfer} disabled={starting || !source || !destination || playlists.filter((pl) => selectedPlaylists.has(pl.id)).length === 0 || (mode === 'sync' && !selectedDestPlaylist) || (source === 'spotify' && !spotifySourceUser) || (destination === 'spotify' && !spotifyDestUser)}>
+                <Button size="lg" type="button" onClick={mode === 'sync' ? startSync : startTransfer} disabled={starting || !source || !destination || playlists.filter((pl) => selectedPlaylists.has(pl.id)).length === 0 || (mode === 'sync' && !selectedDestPlaylist) || (source === 'spotify' && !spotifySourceUser) || (destination === 'spotify' && !spotifyDestUser)}>
                   {starting ? 'Starting...' : (mode === 'sync' ? 'Start sync' : 'Start transfer')}
                 </Button>
               </div>
@@ -527,7 +568,7 @@ export default function ActionPage() {
               )}
               {job && (
                 <div className="mt-6 rounded-xl border bg-white/70 p-5 backdrop-blur-sm dark:border-slate-800 dark:bg-slate-900/40">
-                  <div className="text-base font-semibold">Transfer progress</div>
+                  <div className="text-base font-semibold">{mode === 'sync' ? 'Sync progress' : 'Transfer progress'}</div>
                   <div className="mt-1 text-sm text-muted-foreground">Status: {job.status}</div>
                   <div className="mt-4 space-y-3">
                     {job.items.map((it) => (
@@ -582,7 +623,7 @@ export default function ActionPage() {
           <Dialog.Content className="fixed left-1/2 top-1/2 z-50 w-[95vw] max-w-2xl max-h-[80vh] -translate-x-1/2 -translate-y-1/2 rounded-xl border bg-white/70 p-0 text-left shadow-xl backdrop-blur-sm focus:outline-none dark:bg-slate-900/60 dark:border-slate-800 flex flex-col">
             <div className="p-5 border-b dark:border-slate-800">
               <Dialog.Title className="text-lg font-semibold">Your playlists</Dialog.Title>
-              <Dialog.Description className="text-sm text-muted-foreground">Choose the playlists to transfer</Dialog.Description>
+              <Dialog.Description className="text-sm text-muted-foreground">Choose the playlists to {mode === 'sync' ? 'sync' : 'transfer'}</Dialog.Description>
             </div>
             <div className="flex-1 overflow-auto p-3">
               {loadingPlaylists && (
@@ -608,7 +649,6 @@ export default function ActionPage() {
                         <input type={mode === 'sync' ? 'radio' : 'checkbox'} name="playlist-pick" checked={checked} onChange={() => togglePick(pl.id)} className="pointer-events-none" />
                         <div className="flex min-w-0 flex-1 items-center gap-3">
                           {artworkUrl ? (
-                            // eslint-disable-next-line @next/next/no-img-element
                             <img src={artworkUrl} alt="" className="h-8 w-8 rounded object-cover" />
                           ) : (
                             <div className="h-8 w-8 rounded bg-[#7c3aed]/10" />
