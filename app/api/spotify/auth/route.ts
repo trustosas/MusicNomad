@@ -25,6 +25,7 @@ export async function GET(request: Request) {
     'playlist-read-private',
     'playlist-read-collaborative',
     'user-library-read',
+    'user-library-modify',
     'playlist-modify-private',
     'playlist-modify-public',
     'ugc-image-upload',
