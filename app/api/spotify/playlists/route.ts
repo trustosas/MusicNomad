@@ -57,21 +57,7 @@ export async function GET(request: Request) {
     image: Array.isArray(p.images) && p.images.length > 0 ? { url: p.images[0].url as string, width: p.images[0].width as number | undefined, height: p.images[0].height as number | undefined } : null,
   }))
 
-  let likedTotal: number | undefined
-  try {
-    const likedRes = await fetch('https://api.spotify.com/v1/me/tracks?limit=1', { headers: { Authorization: `Bearer ${accessToken}` }, cache: 'no-store' })
-    if (likedRes.ok) {
-      const likedData = await likedRes.json()
-      likedTotal = typeof likedData.total === 'number' ? likedData.total : undefined
-    }
-  } catch {}
 
-  playlists.unshift({
-    id: 'liked_songs',
-    name: 'Liked Songs',
-    tracks_total: likedTotal,
-    image: null,
-  })
 
   const res = NextResponse.json({ items: playlists })
   if (updated) {
