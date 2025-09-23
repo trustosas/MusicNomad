@@ -314,7 +314,7 @@ async function runSpotifySync(job: TransferJobState, input: StartSyncInput) {
       item.total = toDest.length
       log(job, `One-way sync: adding ${toDest.length} missing tracks to destination`)
       if (input.destination.id === 'liked_songs') {
-        const ids = extractTrackIdsFromUris(toDest)
+        const ids = extractTrackIdsFromUris(toDest).slice().reverse()
         await addTracksToLikedSongsSequential(destToken, ids, (added) => { item.added += added; item.message = `${item.added}/${item.total}` })
       } else {
         await addTracksInBatches(destToken, input.destination.id, toDest, (added) => { item.added += added; item.message = `${item.added}/${item.total}` })
@@ -342,7 +342,7 @@ async function runSpotifySync(job: TransferJobState, input: StartSyncInput) {
       destItem.total = toDest.length
       log(job, `Two-way sync: adding ${toDest.length} tracks to destination`)
       if (input.destination.id === 'liked_songs') {
-        const ids = extractTrackIdsFromUris(toDest)
+        const ids = extractTrackIdsFromUris(toDest).slice().reverse()
         await addTracksToLikedSongsSequential(destToken, ids, (added) => { destItem.added += added; destItem.message = `${destItem.added}/${destItem.total}` })
       } else {
         await addTracksInBatches(destToken, input.destination.id, toDest, (added) => { destItem.added += added; destItem.message = `${destItem.added}/${destItem.total}` })
@@ -354,7 +354,7 @@ async function runSpotifySync(job: TransferJobState, input: StartSyncInput) {
       sourceItem.total = toSource.length
       log(job, `Two-way sync: adding ${toSource.length} tracks to source`)
       if (input.source.id === 'liked_songs') {
-        const ids = extractTrackIdsFromUris(toSource)
+        const ids = extractTrackIdsFromUris(toSource).slice().reverse()
         await addTracksToLikedSongsSequential(sourceToken, ids, (added) => { sourceItem.added += added; sourceItem.message = `${sourceItem.added}/${sourceItem.total}` })
       } else {
         await addTracksInBatches(sourceToken, input.source.id, toSource, (added) => { sourceItem.added += added; sourceItem.message = `${sourceItem.added}/${sourceItem.total}` })
