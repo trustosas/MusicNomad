@@ -13,6 +13,9 @@ export async function POST(request: Request) {
     if (playlists.length === 0) {
       return NextResponse.json({ error: 'No playlists provided' }, { status: 400 })
     }
+    if (playlists.some((p) => p.id === 'liked_songs')) {
+      return NextResponse.json({ error: 'Transferring Liked Songs is not supported' }, { status: 400 })
+    }
     const cookieStore = cookies()
     const auth = {
       sourceAccessToken: cookieStore.get('spotify_source_access_token')?.value || cookieStore.get('spotify_access_token')?.value || '',
