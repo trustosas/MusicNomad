@@ -267,11 +267,7 @@ async function runSpotifyToSpotify(job: TransferJobState, input: StartTransferIn
       const coverUrl = details && (details as any).images && Array.isArray((details as any).images) && (details as any).images[0]?.url
       await setPlaylistCover(destToken, created.id, coverUrl)
       log(job, `Adding tracks...`)
-      if (item.playlistId === 'liked_songs') {
-        await addTracksSequentiallyToPlaylist(destToken, created.id, uris, (added) => { item.added += added; item.message = `${item.added}/${item.total}` })
-      } else {
-        await addTracksInBatches(destToken, created.id, uris, (added) => { item.added += added; item.message = `${item.added}/${item.total}` })
-      }
+      await addTracksInBatches(destToken, created.id, uris, (added) => { item.added += added; item.message = `${item.added}/${item.total}` })
       item.status = 'completed'
       log(job, `Completed: ${details.name}`)
     } catch (e: any) {
