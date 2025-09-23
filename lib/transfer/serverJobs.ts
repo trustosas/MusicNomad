@@ -165,15 +165,16 @@ function extractTrackIdsFromUris(uris: string[]): string[] {
     .filter((x): x is string => !!x)
 }
 
-async function addTracksToLikedSongsPreservingOrder(token: string, ids: string[], onProgress: (added: number) => void) {
-  for (let i = ids.length - 1; i >= 0; i--) {
+async function addTracksToLikedSongsInBatches(token: string, ids: string[], onProgress: (added: number) => void) {
+  for (let i = 0; i < ids.length; i += 50) {
+    const batch = ids.slice(i, i + 50)
     const res = await fetch('https://api.spotify.com/v1/me/tracks', {
       method: 'PUT',
       headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ ids: [ids[i]] })
+      body: JSON.stringify({ ids: batch })
     })
     if (!res.ok) throw new Error('Failed to save tracks to library')
-    onProgress(1)
+    onProgress(batch.length)
   }
 }
 
@@ -250,7 +251,7 @@ async function runSpotifySync(job: TransferJobState, input: StartSyncInput) {
       log(job, `One-way sync: adding ${toDest.length} missing tracks to destination`)
       if (input.destination.id === 'liked_songs') {
         const ids = extractTrackIdsFromUris(toDest)
-        await addTracksToLikedSongsPreservingOrder(destToken, ids, (added) => { item.added += added; item.message = `${item.added}/${item.total}` })
+        await addTracksToLikedSongsInBatches(destToken, ids, (added) => { item.added += added; item.message = `${item.added}/${item.total}` })
       } else {
         await addTracksInBatches(destToken, input.destination.id, toDest, (added) => { item.added += added; item.message = `${item.added}/${item.total}` })
       }
@@ -263,7 +264,7 @@ async function runSpotifySync(job: TransferJobState, input: StartSyncInput) {
       log(job, `Two-way sync: adding ${toDest.length} tracks to destination`)
       if (input.destination.id === 'liked_songs') {
         const ids = extractTrackIdsFromUris(toDest)
-        await addTracksToLikedSongsPreservingOrder(destToken, ids, (added) => { destItem.added += added; destItem.message = `${destItem.added}/${destItem.total}` })
+        await addTracksToLikedSongsInBatches(destToken, ids, (added) => { destItem.added += added; destItem.message = `${destItem.added}/${destItem.total}` })
       } else {
         await addTracksInBatches(destToken, input.destination.id, toDest, (added) => { destItem.added += added; destItem.message = `${destItem.added}/${destItem.total}` })
       }
@@ -275,7 +276,7 @@ async function runSpotifySync(job: TransferJobState, input: StartSyncInput) {
       log(job, `Two-way sync: adding ${toSource.length} tracks to source`)
       if (input.source.id === 'liked_songs') {
         const ids = extractTrackIdsFromUris(toSource)
-        await addTracksToLikedSongsPreservingOrder(sourceToken, ids, (added) => { sourceItem.added += added; sourceItem.message = `${sourceItem.added}/${sourceItem.total}` })
+        await addTracksToLikedSongsInBatches(sourceToken, ids, (added) => { sourceItem.added += added; sourceItem.message = `${sourceItem.added}/${sourceItem.total}` })
       } else {
         await addTracksInBatches(sourceToken, input.source.id, toSource, (added) => { sourceItem.added += added; sourceItem.message = `${sourceItem.added}/${sourceItem.total}` })
       }
