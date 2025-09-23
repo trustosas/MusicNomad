@@ -156,6 +156,20 @@ async function addTracksInBatches(token: string, playlistId: string, uris: strin
   }
 }
 
+async function removeTracksFromPlaylistInBatches(token: string, playlistId: string, uris: string[], onProgress: (removed: number) => void) {
+  for (let i = 0; i < uris.length; i += 100) {
+    const batchUris = uris.slice(i, i + 100)
+    const body = { tracks: batchUris.map((u) => ({ uri: u })) }
+    const res = await fetch(`https://api.spotify.com/v1/playlists/${encodeURIComponent(playlistId)}/tracks`, {
+      method: 'DELETE',
+      headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    })
+    if (!res.ok) throw new Error('Failed to remove tracks')
+    onProgress(batchUris.length)
+  }
+}
+
 function extractTrackIdsFromUris(uris: string[]): string[] {
   return uris
     .map((u) => {
@@ -174,6 +188,19 @@ async function addTracksToLikedSongsInBatches(token: string, ids: string[], onPr
       body: JSON.stringify({ ids: batch })
     })
     if (!res.ok) throw new Error('Failed to save tracks to library')
+    onProgress(batch.length)
+  }
+}
+
+async function removeTracksFromLikedSongsInBatches(token: string, ids: string[], onProgress: (removed: number) => void) {
+  for (let i = 0; i < ids.length; i += 50) {
+    const batch = ids.slice(i, i + 50)
+    const url = `https://api.spotify.com/v1/me/tracks?ids=${encodeURIComponent(batch.join(','))}`
+    const res = await fetch(url, {
+      method: 'DELETE',
+      headers: { Authorization: `Bearer ${token}` },
+    })
+    if (!res.ok) throw new Error('Failed to remove tracks from library')
     onProgress(batch.length)
   }
 }
@@ -255,6 +282,21 @@ async function runSpotifySync(job: TransferJobState, input: StartSyncInput) {
       } else {
         await addTracksInBatches(destToken, input.destination.id, toDest, (added) => { item.added += added; item.message = `${item.added}/${item.total}` })
       }
+
+      const toRemoveFromDest = destUris.filter((u) => !sourceSet.has(u))
+      if (toRemoveFromDest.length > 0) {
+        log(job, `One-way sync: removing ${toRemoveFromDest.length} tracks from destination not present in source`)
+        if (input.destination.id === 'liked_songs') {
+          const rmIds = extractTrackIdsFromUris(toRemoveFromDest)
+          await removeTracksFromLikedSongsInBatches(destToken, rmIds, () => {})
+        } else {
+          await removeTracksFromPlaylistInBatches(destToken, input.destination.id, toRemoveFromDest, () => {})
+        }
+        log(job, `Removed ${toRemoveFromDest.length} tracks from destination`)
+      } else {
+        log(job, 'No tracks to remove from destination')
+      }
+
       item.status = 'completed'
       log(job, `One-way sync completed`)
     } else {
