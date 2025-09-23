@@ -13,9 +13,6 @@ export async function POST(request: Request) {
     if (typeof source.id !== 'string' || typeof source.name !== 'string' || typeof destination.id !== 'string' || typeof destination.name !== 'string') {
       return NextResponse.json({ error: 'Invalid payload' }, { status: 400 })
     }
-    if (source.id === 'liked_songs' || destination.id === 'liked_songs') {
-      return NextResponse.json({ error: 'Syncing Liked Songs is not supported' }, { status: 400 })
-    }
 
     const cookieStore = cookies()
     const auth = {

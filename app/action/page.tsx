@@ -52,6 +52,12 @@ export default function ActionPage() {
         return new Set([first])
       })
       setConfirmedSelectedCount((c) => Math.min(c, 1))
+    } else {
+      setSelectedPlaylists((prev) => {
+        const next = new Set(prev)
+        next.delete('liked_songs')
+        return next
+      })
     }
   }, [mode])
 
@@ -636,7 +642,7 @@ export default function ActionPage() {
                 <div className="p-6 text-center text-sm text-muted-foreground">No playlists found</div>
               )}
               <ul className="space-y-1">
-                {playlists.map((pl) => {
+                {(mode === 'sync' ? playlists : playlists.filter((pl) => pl.id !== 'liked_songs')).map((pl) => {
                   const checked = selectedPlaylists.has(pl.id)
                   const artworkUrl = pl.id === 'liked_songs' ? 'https://cdn.builder.io/api/v1/image/assets%2F672bd2452a84448ea16383bbff6a43d6%2F533ea5db8ac54bf58d52fcac265b743a?format=webp&width=800' : (pl.image?.url || null)
                   return (
