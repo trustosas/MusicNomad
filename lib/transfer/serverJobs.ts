@@ -91,7 +91,7 @@ async function fetchPlaylistTrackUris(token: string, playlistId: string): Promis
       const res = await fetch(nextUrl, { headers: { Authorization: `Bearer ${token}` }, cache: 'no-store' })
       if (!res.ok) throw new Error('Failed to fetch liked songs')
       const data = await res.json()
-      for (const item of data.items || []) {
+      for (const item of (data.items || [])) {
         const track = item.track
         if (track && track.uri) uris.push(track.uri as string)
       }
@@ -104,7 +104,7 @@ async function fetchPlaylistTrackUris(token: string, playlistId: string): Promis
     const res = await fetch(nextUrl, { headers: { Authorization: `Bearer ${token}` }, cache: 'no-store' })
     if (!res.ok) throw new Error('Failed to fetch playlist tracks')
     const data = await res.json()
-    for (const item of data.items || []) {
+    for (const item of (data.items || [])) {
       const track = item.track
       if (track && track.uri) uris.push(track.uri as string)
     }
@@ -205,6 +205,43 @@ async function removeTracksFromLikedSongsInBatches(token: string, ids: string[],
   }
 }
 
+// Sequential operations for Liked Songs and playlist adds
+async function addTracksSequentiallyToPlaylist(token: string, playlistId: string, uris: string[], onProgress: (added: number) => void) {
+  for (const uri of uris) {
+    const res = await fetch(`https://api.spotify.com/v1/playlists/${encodeURIComponent(playlistId)}/tracks`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ uris: [uri] })
+    })
+    if (!res.ok) throw new Error('Failed to add track')
+    onProgress(1)
+  }
+}
+
+async function addTracksToLikedSongsSequential(token: string, ids: string[], onProgress: (added: number) => void) {
+  for (const id of ids) {
+    const res = await fetch('https://api.spotify.com/v1/me/tracks', {
+      method: 'PUT',
+      headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ids: [id] })
+    })
+    if (!res.ok) throw new Error('Failed to save track to library')
+    onProgress(1)
+  }
+}
+
+async function removeTracksFromLikedSongsSequential(token: string, ids: string[], onProgress: (removed: number) => void) {
+  for (const id of ids) {
+    const url = `https://api.spotify.com/v1/me/tracks?ids=${encodeURIComponent(id)}`
+    const res = await fetch(url, {
+      method: 'DELETE',
+      headers: { Authorization: `Bearer ${token}` },
+    })
+    if (!res.ok) throw new Error('Failed to remove track from library')
+    onProgress(1)
+  }
+}
+
 async function runSpotifyToSpotify(job: TransferJobState, input: StartTransferInput) {
   const sourceToken = await ensureToken(input.auth.sourceAccessToken, input.auth.sourceRefreshToken)
   const destToken = await ensureToken(input.auth.destAccessToken, input.auth.destRefreshToken)
@@ -230,7 +267,11 @@ async function runSpotifyToSpotify(job: TransferJobState, input: StartTransferIn
       const coverUrl = details && (details as any).images && Array.isArray((details as any).images) && (details as any).images[0]?.url
       await setPlaylistCover(destToken, created.id, coverUrl)
       log(job, `Adding tracks...`)
-      await addTracksInBatches(destToken, created.id, uris, (added) => { item.added += added; item.message = `${item.added}/${item.total}` })
+      if (item.playlistId === 'liked_songs') {
+        await addTracksSequentiallyToPlaylist(destToken, created.id, uris, (added) => { item.added += added; item.message = `${item.added}/${item.total}` })
+      } else {
+        await addTracksInBatches(destToken, created.id, uris, (added) => { item.added += added; item.message = `${item.added}/${item.total}` })
+      }
       item.status = 'completed'
       log(job, `Completed: ${details.name}`)
     } catch (e: any) {
@@ -278,7 +319,7 @@ async function runSpotifySync(job: TransferJobState, input: StartSyncInput) {
       log(job, `One-way sync: adding ${toDest.length} missing tracks to destination`)
       if (input.destination.id === 'liked_songs') {
         const ids = extractTrackIdsFromUris(toDest)
-        await addTracksToLikedSongsInBatches(destToken, ids, (added) => { item.added += added; item.message = `${item.added}/${item.total}` })
+        await addTracksToLikedSongsSequential(destToken, ids, (added) => { item.added += added; item.message = `${item.added}/${item.total}` })
       } else {
         await addTracksInBatches(destToken, input.destination.id, toDest, (added) => { item.added += added; item.message = `${item.added}/${item.total}` })
       }
@@ -288,7 +329,7 @@ async function runSpotifySync(job: TransferJobState, input: StartSyncInput) {
         log(job, `One-way sync: removing ${toRemoveFromDest.length} tracks from destination not present in source`)
         if (input.destination.id === 'liked_songs') {
           const rmIds = extractTrackIdsFromUris(toRemoveFromDest)
-          await removeTracksFromLikedSongsInBatches(destToken, rmIds, () => {})
+          await removeTracksFromLikedSongsSequential(destToken, rmIds, () => {})
         } else {
           await removeTracksFromPlaylistInBatches(destToken, input.destination.id, toRemoveFromDest, () => {})
         }
@@ -306,7 +347,7 @@ async function runSpotifySync(job: TransferJobState, input: StartSyncInput) {
       log(job, `Two-way sync: adding ${toDest.length} tracks to destination`)
       if (input.destination.id === 'liked_songs') {
         const ids = extractTrackIdsFromUris(toDest)
-        await addTracksToLikedSongsInBatches(destToken, ids, (added) => { destItem.added += added; destItem.message = `${destItem.added}/${destItem.total}` })
+        await addTracksToLikedSongsSequential(destToken, ids, (added) => { destItem.added += added; destItem.message = `${destItem.added}/${destItem.total}` })
       } else {
         await addTracksInBatches(destToken, input.destination.id, toDest, (added) => { destItem.added += added; destItem.message = `${destItem.added}/${destItem.total}` })
       }
@@ -318,7 +359,7 @@ async function runSpotifySync(job: TransferJobState, input: StartSyncInput) {
       log(job, `Two-way sync: adding ${toSource.length} tracks to source`)
       if (input.source.id === 'liked_songs') {
         const ids = extractTrackIdsFromUris(toSource)
-        await addTracksToLikedSongsInBatches(sourceToken, ids, (added) => { sourceItem.added += added; sourceItem.message = `${sourceItem.added}/${sourceItem.total}` })
+        await addTracksToLikedSongsSequential(sourceToken, ids, (added) => { sourceItem.added += added; sourceItem.message = `${sourceItem.added}/${sourceItem.total}` })
       } else {
         await addTracksInBatches(sourceToken, input.source.id, toSource, (added) => { sourceItem.added += added; sourceItem.message = `${sourceItem.added}/${sourceItem.total}` })
       }
