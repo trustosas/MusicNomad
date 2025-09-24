@@ -198,6 +198,8 @@ export default function ActionPage() {
       })
       if (!res.ok) throw new Error('Failed to save track to library')
       onProgress(1)
+      // Space out saves to ensure distinct added_at timestamps and preserve relative ordering
+      await new Promise((resolve) => setTimeout(resolve, 250))
     }
   }
 
