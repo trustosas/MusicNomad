@@ -44,6 +44,170 @@ export default function ActionPage() {
   const [selectedDestPlaylist, setSelectedDestPlaylist] = useState<string | null>(null)
   const [confirmedDestSelected, setConfirmedDestSelected] = useState(false)
 
+  // Helpers for client-side operations
+  const getCookie = (name: string): string | null => {
+    if (typeof document === 'undefined') return null
+    const v = document.cookie.split('; ').find((r) => r.startsWith(name + '='))
+    return v ? decodeURIComponent(v.split('=')[1] || '') : null
+  }
+
+  const ensureAccessToken = async (ctx: 'source' | 'destination'): Promise<string | null> => {
+    try { await fetch(`/api/spotify/me?ctx=${ctx}`, { cache: 'no-store' }) } catch {}
+    return getCookie(`spotify_${ctx}_access_token`)
+  }
+
+  const logAppend = (setter: (s: TransferState | null) => void, msg: string) => {
+    setter((prev) => {
+      if (!prev) return prev
+      const next = { ...prev, logs: [...prev.logs, msg], updatedAt: Date.now() }
+      return next
+    })
+  }
+
+  const updateItem = (setter: (s: TransferState | null) => void, playlistId: string, patch: Partial<TransferItem>) => {
+    setter((prev) => {
+      if (!prev) return prev
+      const items = prev.items.map((it) => (it.playlistId === playlistId ? { ...it, ...patch } : it))
+      return { ...prev, items, updatedAt: Date.now() }
+    })
+  }
+
+  const setJobStatus = (setter: (s: TransferState | null) => void, status: TransferState['status']) => {
+    setter((prev) => (prev ? { ...prev, status, updatedAt: Date.now() } : prev))
+  }
+
+  const fetchPlaylistDetails = async (token: string, playlistId: string) => {
+    if (playlistId === 'liked_songs') return { id: 'liked_songs', name: 'Liked Songs', description: '' } as any
+    const url = `https://api.spotify.com/v1/playlists/${encodeURIComponent(playlistId)}?fields=id,name,description,images(total,height,width,url)`
+    const res = await fetch(url, { headers: { Authorization: `Bearer ${token}` }, cache: 'no-store' })
+    if (!res.ok) throw new Error('Failed to get playlist details')
+    return res.json() as Promise<{ id: string; name: string; description?: string; images?: { url: string; width?: number; height?: number }[] }>
+  }
+
+  const fetchPlaylistTrackUris = async (token: string, playlistId: string): Promise<string[]> => {
+    const uris: string[] = []
+    if (playlistId === 'liked_songs') {
+      let nextUrl: string | null = 'https://api.spotify.com/v1/me/tracks?limit=50'
+      while (nextUrl) {
+        const res = await fetch(nextUrl, { headers: { Authorization: `Bearer ${token}` }, cache: 'no-store' })
+        if (!res.ok) throw new Error('Failed to fetch liked songs')
+        const data = await res.json()
+        for (const item of (data.items || [])) {
+          const track = item.track
+          if (track && track.uri) uris.push(track.uri as string)
+        }
+        nextUrl = data.next
+      }
+      return uris
+    }
+    let nextUrl: string | null = `https://api.spotify.com/v1/playlists/${encodeURIComponent(playlistId)}/tracks?limit=100`
+    while (nextUrl) {
+      const res = await fetch(nextUrl, { headers: { Authorization: `Bearer ${token}` }, cache: 'no-store' })
+      if (!res.ok) throw new Error('Failed to fetch playlist tracks')
+      const data = await res.json()
+      for (const item of (data.items || [])) {
+        const track = item.track
+        if (track && track.uri) uris.push(track.uri as string)
+      }
+      nextUrl = data.next
+    }
+    return uris
+  }
+
+  const createDestinationPlaylist = async (token: string, name: string, description?: string) => {
+    const res = await fetch('https://api.spotify.com/v1/me/playlists', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, description: description || '' }),
+    })
+    if (!res.ok) throw new Error('Failed to create destination playlist')
+    return res.json() as Promise<{ id: string }>
+  }
+
+  const arrayBufferToBase64 = (buffer: ArrayBuffer) => {
+    let binary = ''
+    const bytes = new Uint8Array(buffer)
+    const chunk = 0x8000
+    for (let i = 0; i < bytes.length; i += chunk) {
+      binary += String.fromCharCode.apply(null, Array.from(bytes.subarray(i, i + chunk)))
+    }
+    return btoa(binary)
+  }
+
+  const setPlaylistCover = async (token: string, playlistId: string, imageUrl?: string) => {
+    if (!imageUrl) return
+    try {
+      const imgRes = await fetch(imageUrl)
+      if (!imgRes.ok) return
+      const contentType = imgRes.headers.get('content-type') || ''
+      if (!contentType.includes('jpeg') && !contentType.includes('jpg')) return
+      const arrBuf = await imgRes.arrayBuffer()
+      const b64 = arrayBufferToBase64(arrBuf)
+      await fetch(`https://api.spotify.com/v1/playlists/${encodeURIComponent(playlistId)}/images`, {
+        method: 'PUT',
+        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'image/jpeg' },
+        body: b64,
+      })
+    } catch {}
+  }
+
+  const addTracksInBatches = async (token: string, playlistId: string, uris: string[], onProgress: (added: number) => void) => {
+    for (let i = 0; i < uris.length; i += 100) {
+      const batch = uris.slice(i, i + 100)
+      const res = await fetch(`https://api.spotify.com/v1/playlists/${encodeURIComponent(playlistId)}/tracks`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ uris: batch })
+      })
+      if (!res.ok) throw new Error('Failed to add tracks')
+      onProgress(batch.length)
+    }
+  }
+
+  const removeTracksFromPlaylistInBatches = async (token: string, playlistId: string, uris: string[], onProgress: (removed: number) => void) => {
+    for (let i = 0; i < uris.length; i += 100) {
+      const batchUris = uris.slice(i, i + 100)
+      const body = { tracks: batchUris.map((u) => ({ uri: u })) }
+      const res = await fetch(`https://api.spotify.com/v1/playlists/${encodeURIComponent(playlistId)}/tracks`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      })
+      if (!res.ok) throw new Error('Failed to remove tracks')
+      onProgress(batchUris.length)
+    }
+  }
+
+  const extractTrackIdsFromUris = (uris: string[]): string[] => {
+    return uris
+      .map((u) => {
+        const m = u.match(/spotify:track:([A-Za-z0-9]+)/)
+        return m ? m[1] : null
+      })
+      .filter((x): x is string => !!x)
+  }
+
+  const addTracksToLikedSongsSequential = async (token: string, ids: string[], onProgress: (added: number) => void) => {
+    for (const id of ids) {
+      const res = await fetch('https://api.spotify.com/v1/me/tracks', {
+        method: 'PUT',
+        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ids: [id] })
+      })
+      if (!res.ok) throw new Error('Failed to save track to library')
+      onProgress(1)
+    }
+  }
+
+  const removeTracksFromLikedSongsSequential = async (token: string, ids: string[], onProgress: (removed: number) => void) => {
+    for (const id of ids) {
+      const url = `https://api.spotify.com/v1/me/tracks?ids=${encodeURIComponent(id)}`
+      const res = await fetch(url, { method: 'DELETE', headers: { Authorization: `Bearer ${token}` } })
+      if (!res.ok) throw new Error('Failed to remove track from library')
+      onProgress(1)
+    }
+  }
+
   useEffect(() => {
     if (mode === 'sync') {
       setSelectedPlaylists((prev) => {
@@ -172,87 +336,76 @@ export default function ActionPage() {
   ]
   const [current, setCurrent] = useState(0)
 
-  const [jobId, setJobId] = useState<string | null>(null)
   const [job, setJob] = useState<TransferState | null>(null)
   const [starting, setStarting] = useState(false)
   const [startError, setStartError] = useState<string | null>(null)
-
-  useEffect(() => {
-    try {
-      let id: string | null = null
-      if (typeof window !== 'undefined') {
-        id = window.localStorage.getItem('active_transfer_job_id')
-        if (!id) {
-          const found = document.cookie.split('; ').find((r) => r.startsWith('active_transfer_job_id='))
-          if (found) id = decodeURIComponent(found.split('=')[1] || '')
-        }
-      }
-      if (id) {
-        setJobId(id)
-        setCurrent(2)
-      }
-    } catch {}
-  }, [])
-
-  useEffect(() => {
-    if (!jobId) return
-    try {
-      if (typeof window !== 'undefined') {
-        window.localStorage.setItem('active_transfer_job_id', jobId)
-        document.cookie = `active_transfer_job_id=${encodeURIComponent(jobId)}; path=/; max-age=86400`
-      }
-    } catch {}
-  }, [jobId])
-
-  useEffect(() => {
-    if (!jobId) return
-    let timer: number | null = null
-    const clearPersisted = () => {
-      try {
-        if (typeof window !== 'undefined') {
-          window.localStorage.removeItem('active_transfer_job_id')
-          document.cookie = 'active_transfer_job_id=; Max-Age=0; path=/'
-        }
-      } catch {}
-    }
-    const poll = async () => {
-      try {
-        const res = await fetch(`/api/transfer/status?id=${encodeURIComponent(jobId)}`, { cache: 'no-store' })
-        if (res.ok) {
-          const data = await res.json()
-          setJob(data)
-          if (data.status === 'completed' || data.status === 'failed') {
-            clearPersisted()
-            return
-          }
-        } else if (res.status === 404) {
-          clearPersisted()
-          return
-        }
-      } catch {}
-      timer = window.setTimeout(poll, 1000)
-    }
-    poll()
-    return () => { if (timer) window.clearTimeout(timer) }
-  }, [jobId])
 
   const startTransfer = async () => {
     setStartError(null)
     setStarting(true)
     try {
       const selectedList = playlists.filter((pl) => selectedPlaylists.has(pl.id)).map((pl) => ({ id: pl.id, name: pl.name }))
-      const res = await fetch('/api/transfer/start', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ playlists: selectedList }) })
-      if (!res.ok) throw new Error('Failed to start transfer')
-      const data = await res.json()
-      setJobId(data.id)
-      setJob(data.state)
-      setCurrent(2)
+      if (selectedList.length === 0) throw new Error('No playlists selected')
+
+      const now = Date.now()
+      const initJob: TransferState = {
+        id: 'client_job',
+        status: 'running',
+        createdAt: now,
+        updatedAt: now,
+        logs: [],
+        items: selectedList.map((p) => ({ playlistId: p.id, playlistName: p.name, status: 'pending', total: 0, added: 0 })),
+      }
+      setJob(initJob)
+
+      const sourceToken = await ensureAccessToken('source')
+      const destToken = await ensureAccessToken('destination')
+      if (!sourceToken || !destToken) {
+        setJobStatus(setJob, 'failed')
+        logAppend(setJob, 'Authentication missing. Please sign in to both accounts.')
+        return
+      }
+
+      // Validate destination token
       try {
-        if (typeof window !== 'undefined') {
-          window.localStorage.setItem('active_transfer_job_id', data.id)
-          document.cookie = `active_transfer_job_id=${encodeURIComponent(data.id)}; path=/; max-age=86400`
-        }
+        await fetch('https://api.spotify.com/v1/me', { headers: { Authorization: `Bearer ${destToken}` } })
       } catch {}
+
+      for (const item of selectedList) {
+        try {
+          updateItem(setJob, item.id, { status: 'running', error: undefined, message: undefined, added: 0, total: 0 })
+          logAppend(setJob, `Reading playlist: ${item.name}`)
+          const details = await fetchPlaylistDetails(sourceToken, item.id)
+          const uris = await fetchPlaylistTrackUris(sourceToken, item.id)
+          updateItem(setJob, item.id, { total: uris.length })
+          logAppend(setJob, `Found ${uris.length} tracks`)
+          logAppend(setJob, `Creating destination playlist: ${details.name}`)
+          const created = await createDestinationPlaylist(destToken, details.name, (details as any).description)
+          const coverUrl = (details as any)?.images?.[0]?.url as string | undefined
+          await setPlaylistCover(destToken, created.id, coverUrl)
+          logAppend(setJob, 'Adding tracks...')
+          await addTracksInBatches(destToken, created.id, uris, (added) => {
+            updateItem(setJob, item.id, (prev => ({})) as any) // noop to ensure type
+            setJob((prev) => {
+              if (!prev) return prev
+              const nextItems = prev.items.map((it) => it.playlistId === item.id ? { ...it, added: it.added + added, message: `${it.added + added}/${it.total}` } : it)
+              return { ...prev, items: nextItems, updatedAt: Date.now() }
+            })
+          })
+          updateItem(setJob, item.id, { status: 'completed' })
+          logAppend(setJob, `Completed: ${details.name}`)
+        } catch (e: any) {
+          const err = e?.message || 'Unknown error'
+          updateItem(setJob, item.id, { status: 'failed', error: err })
+          logAppend(setJob, `Failed ${item.name}: ${err}`)
+        }
+      }
+
+      setJob((prev) => {
+        if (!prev) return prev
+        const status = prev.items.some((i) => i.status === 'failed') ? 'failed' : 'completed'
+        return { ...prev, status, updatedAt: Date.now() }
+      })
     } catch (e: any) {
       setStartError(e?.message || 'Unable to start transfer')
     } finally {
@@ -267,21 +420,136 @@ export default function ActionPage() {
       const src = playlists.find((pl) => selectedPlaylists.has(pl.id))
       const dst = destPlaylists.find((p) => p.id === selectedDestPlaylist) || null
       if (!src || !dst) throw new Error('Select source and destination playlists')
-      const body = { source: { id: src.id, name: src.name }, destination: { id: dst.id, name: dst.name }, mode: syncMode }
-      const res = await fetch('/api/sync/start', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
-      if (!res.ok) throw new Error('Failed to start sync')
-      const data = await res.json()
-      setJobId(data.id)
-      setJob(data.state)
-      setCurrent(2)
-      try {
-        if (typeof window !== 'undefined') {
-          window.localStorage.setItem('active_transfer_job_id', data.id)
-          document.cookie = `active_transfer_job_id=${encodeURIComponent(data.id)}; path=/; max-age=86400`
+
+      const now = Date.now()
+      const items: TransferItem[] = syncMode === 'two_way'
+        ? [
+            { playlistId: `to:${dst.id}`, playlistName: `To destination: ${dst.name}`, status: 'pending', total: 0, added: 0 },
+            { playlistId: `to:${src.id}`, playlistName: `To source: ${src.name}`, status: 'pending', total: 0, added: 0 },
+          ]
+        : [
+            { playlistId: dst.id, playlistName: `Add to ${dst.name}`, status: 'pending', total: 0, added: 0 },
+          ]
+      setJob({ id: 'client_job', status: 'running', createdAt: now, updatedAt: now, logs: [], items })
+
+      const sourceToken = await ensureAccessToken('source')
+      const destToken = await ensureAccessToken('destination')
+      if (!sourceToken || !destToken) {
+        setJobStatus(setJob, 'failed')
+        logAppend(setJob, 'Authentication missing. Please sign in to both accounts.')
+        return
+      }
+
+      logAppend(setJob, `Fetching source tracks: ${src.name}`)
+      const sourceUris = await fetchPlaylistTrackUris(sourceToken, src.id)
+      logAppend(setJob, `Source has ${sourceUris.length} tracks`)
+
+      logAppend(setJob, `Fetching destination tracks: ${dst.name}`)
+      const destUris = await fetchPlaylistTrackUris(destToken, dst.id)
+      logAppend(setJob, `Destination has ${destUris.length} tracks`)
+
+      const sourceSet = new Set(sourceUris)
+      const destSet = new Set(destUris)
+      const toDest = sourceUris.filter((u) => !destSet.has(u))
+      const toSource = destUris.filter((u) => !sourceSet.has(u))
+
+      if (syncMode === 'one_way') {
+        const itemId = dst.id
+        updateItem(setJob, itemId, { status: 'running', total: toDest.length })
+        logAppend(setJob, `One-way sync: adding ${toDest.length} missing tracks to destination`)
+        if (dst.id === 'liked_songs') {
+          const ids = extractTrackIdsFromUris(toDest).slice().reverse()
+          await addTracksToLikedSongsSequential(destToken, ids, (added) => {
+            setJob((prev) => {
+              if (!prev) return prev
+              const items = prev.items.map((it) => it.playlistId === itemId ? { ...it, added: it.added + added, message: `${it.added + added}/${it.total}` } : it)
+              return { ...prev, items, updatedAt: Date.now() }
+            })
+          })
+        } else {
+          await addTracksInBatches(destToken, dst.id, toDest, (added) => {
+            setJob((prev) => {
+              if (!prev) return prev
+              const items = prev.items.map((it) => it.playlistId === itemId ? { ...it, added: it.added + added, message: `${it.added + added}/${it.total}` } : it)
+              return { ...prev, items, updatedAt: Date.now() }
+            })
+          })
         }
-      } catch {}
+
+        const toRemoveFromDest = destUris.filter((u) => !sourceSet.has(u))
+        if (toRemoveFromDest.length > 0) {
+          logAppend(setJob, `One-way sync: removing ${toRemoveFromDest.length} tracks from destination not present in source`)
+          if (dst.id === 'liked_songs') {
+            const rmIds = extractTrackIdsFromUris(toRemoveFromDest)
+            await removeTracksFromLikedSongsSequential(destToken, rmIds, () => {})
+          } else {
+            await removeTracksFromPlaylistInBatches(destToken, dst.id, toRemoveFromDest, () => {})
+          }
+          logAppend(setJob, `Removed ${toRemoveFromDest.length} tracks from destination`)
+        } else {
+          logAppend(setJob, 'No tracks to remove from destination')
+        }
+
+        updateItem(setJob, itemId, { status: 'completed' })
+        logAppend(setJob, `One-way sync completed`)
+      } else {
+        const destItemId = `to:${dst.id}`
+        updateItem(setJob, destItemId, { status: 'running', total: toDest.length })
+        logAppend(setJob, `Two-way sync: adding ${toDest.length} tracks to destination`)
+        if (dst.id === 'liked_songs') {
+          const ids = extractTrackIdsFromUris(toDest).slice().reverse()
+          await addTracksToLikedSongsSequential(destToken, ids, (added) => {
+            setJob((prev) => {
+              if (!prev) return prev
+              const items = prev.items.map((it) => it.playlistId === destItemId ? { ...it, added: it.added + added, message: `${it.added + added}/${it.total}` } : it)
+              return { ...prev, items, updatedAt: Date.now() }
+            })
+          })
+        } else {
+          await addTracksInBatches(destToken, dst.id, toDest, (added) => {
+            setJob((prev) => {
+              if (!prev) return prev
+              const items = prev.items.map((it) => it.playlistId === destItemId ? { ...it, added: it.added + added, message: `${it.added + added}/${it.total}` } : it)
+              return { ...prev, items, updatedAt: Date.now() }
+            })
+          })
+        }
+        updateItem(setJob, destItemId, { status: 'completed' })
+
+        const sourceItemId = `to:${src.id}`
+        updateItem(setJob, sourceItemId, { status: 'running', total: toSource.length })
+        logAppend(setJob, `Two-way sync: adding ${toSource.length} tracks to source`)
+        if (src.id === 'liked_songs') {
+          const ids = extractTrackIdsFromUris(toSource).slice().reverse()
+          await addTracksToLikedSongsSequential(sourceToken, ids, (added) => {
+            setJob((prev) => {
+              if (!prev) return prev
+              const items = prev.items.map((it) => it.playlistId === sourceItemId ? { ...it, added: it.added + added, message: `${it.added + added}/${it.total}` } : it)
+              return { ...prev, items, updatedAt: Date.now() }
+            })
+          })
+        } else {
+          await addTracksInBatches(sourceToken, src.id, toSource, (added) => {
+            setJob((prev) => {
+              if (!prev) return prev
+              const items = prev.items.map((it) => it.playlistId === sourceItemId ? { ...it, added: it.added + added, message: `${it.added + added}/${it.total}` } : it)
+              return { ...prev, items, updatedAt: Date.now() }
+            })
+          })
+        }
+        updateItem(setJob, sourceItemId, { status: 'completed' })
+        logAppend(setJob, `Two-way sync completed`)
+      }
+
+      setJobStatus(setJob, 'completed')
     } catch (e: any) {
-      setStartError(e?.message || 'Unable to start sync')
+      const msg = e?.message || 'Unable to start sync'
+      setJob((prev) => {
+        if (!prev) return prev
+        const items = prev.items.map((it) => (it.status === 'running' || it.status === 'pending') ? { ...it, status: 'failed', error: msg } : it)
+        return { ...prev, status: 'failed', items, updatedAt: Date.now(), logs: [...prev.logs, msg] }
+      })
+      setStartError(msg)
     } finally {
       setStarting(false)
     }
@@ -681,7 +949,7 @@ export default function ActionPage() {
       <Dialog.Root open={destLibraryOpen} onOpenChange={(o) => setDestLibraryOpen(o)}>
         <Dialog.Portal>
           <Dialog.Overlay className="fixed inset-0 bg-black/40 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0" />
-          <Dialog.Content className="fixed left-1/2 top-1/2 z-50 w-[95vw] max-w-2xl max-h-[80vh] -translate-x-1/2 -translate-y-1/2 rounded-xl border bg-white/70 p-0 text-left shadow-xl backdrop-blur-sm focus:outline-none dark:bg-slate-900/60 dark:border-slate-800 flex flex-col">
+          <Dialog.Content className="fixed left-1/2 top-1/2 z-50 w-[95vw] max-w-2xl max-height-[80vh] max-h-[80vh] -translate-x-1/2 -translate-y-1/2 rounded-xl border bg-white/70 p-0 text-left shadow-xl backdrop-blur-sm focus:outline-none dark:bg-slate-900/60 dark:border-slate-800 flex flex-col">
             <div className="p-5 border-b dark:border-slate-800">
               <Dialog.Title className="text-lg font-semibold">Destination playlists</Dialog.Title>
               <Dialog.Description className="text-sm text-muted-foreground">Choose the playlist to sync into</Dialog.Description>
