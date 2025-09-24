@@ -2,6 +2,7 @@
 
 import * as ToggleGroup from '@radix-ui/react-toggle-group'
 import * as Dialog from '@radix-ui/react-dialog'
+import * as Switch from '@radix-ui/react-switch'
 import { Button } from '@/components/ui/button'
 import { Check, ChevronRight, ChevronLeft } from 'lucide-react'
 import { useState, useEffect, useLayoutEffect } from 'react'
@@ -24,6 +25,7 @@ type SyncMode = 'one_way' | 'two_way'
 export default function ActionPage() {
   const [mode, setMode] = useState<'transfer' | 'sync'>('transfer')
   const [syncMode, setSyncMode] = useState<SyncMode>('one_way')
+  const [removeMissing, setRemoveMissing] = useState(false)
   const [source, setSource] = useState<ServiceId | null>(null)
   const [destination, setDestination] = useState<ServiceId | null>(null)
 
@@ -477,7 +479,7 @@ export default function ActionPage() {
         }
 
         const toRemoveFromDest = destUris.filter((u) => !sourceSet.has(u))
-        if (toRemoveFromDest.length > 0) {
+        if (removeMissing && toRemoveFromDest.length > 0) {
           logAppend(setJob, `One-way sync: removing ${toRemoveFromDest.length} tracks from destination not present in source`)
           if (dst.id === 'liked_songs') {
             const rmIds = extractTrackIdsFromUris(toRemoveFromDest)
@@ -487,7 +489,7 @@ export default function ActionPage() {
           }
           logAppend(setJob, `Removed ${toRemoveFromDest.length} tracks from destination`)
         } else {
-          logAppend(setJob, 'No tracks to remove from destination')
+          logAppend(setJob, removeMissing ? 'No tracks to remove from destination' : 'Removal disabled: skipping removal from destination')
         }
 
         updateItem(setJob, itemId, { status: 'completed' })
@@ -725,6 +727,20 @@ export default function ActionPage() {
                       <ToggleGroup.Item value="one_way" className="rounded-full px-5 py-2 text-sm font-medium text-slate-700 transition-colors data-[state=on]:bg-[#7c3aed] data-[state=on]:text-white dark:text-slate-200">One way</ToggleGroup.Item>
                       <ToggleGroup.Item value="two_way" className="rounded-full px-5 py-2 text-sm font-medium text-slate-700 transition-colors data-[state=on]:bg-[#7c3aed] data-[state=on]:text-white dark:text-slate-200">Two way</ToggleGroup.Item>
                     </ToggleGroup.Root>
+                  </div>
+                )}
+                {mode === 'sync' && syncMode === 'one_way' && (
+                  <div className="mt-4 flex items-center justify-center">
+                    <label className="flex items-center gap-3 text-sm text-slate-700 dark:text-slate-200">
+                      <Switch.Root
+                        checked={removeMissing}
+                        onCheckedChange={setRemoveMissing}
+                        className="relative inline-flex h-6 w-11 items-center rounded-full border bg-white/70 transition-colors data-[state=checked]:bg-[#7c3aed] dark:border-slate-800 dark:bg-slate-900/40"
+                      >
+                        <Switch.Thumb className="block h-5 w-5 translate-x-1 rounded-full bg-white shadow transition-transform data-[state=checked]:translate-x-5 dark:bg-slate-200" />
+                      </Switch.Root>
+                      <span>Remove tracks in destination not in source</span>
+                    </label>
                   </div>
                 )}
                 <div className="mt-5 grid gap-4">
