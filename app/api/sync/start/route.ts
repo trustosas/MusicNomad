@@ -25,7 +25,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
     }
 
-    const job = startSync({ source, destination, mode: body.mode, auth })
+    const job = startSync({ source, destination, mode: body.mode, removeMissing: !!body.removeMissing, auth })
     const res = NextResponse.json({ id: job.id, state: job })
     res.cookies.set('active_transfer_job_id', job.id, { path: '/', httpOnly: false, maxAge: 60 * 60 })
     return res
