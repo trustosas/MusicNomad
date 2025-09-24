@@ -38,6 +38,7 @@ export type StartSyncInput = {
   source: { id: string; name: string }
   destination: { id: string; name: string }
   mode: SyncMode
+  removeMissing?: boolean
   auth: {
     sourceAccessToken: string
     sourceRefreshToken?: string
@@ -321,7 +322,7 @@ async function runSpotifySync(job: TransferJobState, input: StartSyncInput) {
       }
 
       const toRemoveFromDest = destUris.filter((u) => !sourceSet.has(u))
-      if (toRemoveFromDest.length > 0) {
+      if (input.removeMissing && toRemoveFromDest.length > 0) {
         log(job, `One-way sync: removing ${toRemoveFromDest.length} tracks from destination not present in source`)
         if (input.destination.id === 'liked_songs') {
           const rmIds = extractTrackIdsFromUris(toRemoveFromDest)
@@ -331,7 +332,7 @@ async function runSpotifySync(job: TransferJobState, input: StartSyncInput) {
         }
         log(job, `Removed ${toRemoveFromDest.length} tracks from destination`)
       } else {
-        log(job, 'No tracks to remove from destination')
+        log(job, input.removeMissing ? 'No tracks to remove from destination' : 'Removal disabled: skipping removal from destination')
       }
 
       item.status = 'completed'
