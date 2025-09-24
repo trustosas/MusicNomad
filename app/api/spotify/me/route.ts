@@ -58,11 +58,11 @@ export async function GET(request: Request) {
   const res = NextResponse.json(out)
   if (updated) {
     const maxAge = Math.max(0, Math.floor((newExpiresAt - Date.now()) / 1000))
-    res.cookies.set(`spotify_${ctx}_access_token`, accessToken, { httpOnly: true, secure: true, sameSite: 'lax', path: '/', maxAge })
+    res.cookies.set(`spotify_${ctx}_access_token`, accessToken, { httpOnly: false, secure: true, sameSite: 'lax', path: '/', maxAge })
     if (newRefreshToken) {
-      res.cookies.set(`spotify_${ctx}_refresh_token`, newRefreshToken, { httpOnly: true, secure: true, sameSite: 'lax', path: '/', maxAge: 60 * 60 * 24 * 30 })
+      res.cookies.set(`spotify_${ctx}_refresh_token`, newRefreshToken, { httpOnly: false, secure: true, sameSite: 'lax', path: '/', maxAge: 60 * 60 * 24 * 30 })
     }
-    res.cookies.set(`spotify_${ctx}_expires_at`, String(newExpiresAt), { httpOnly: true, secure: true, sameSite: 'lax', path: '/', maxAge })
+    res.cookies.set(`spotify_${ctx}_expires_at`, String(newExpiresAt), { httpOnly: false, secure: true, sameSite: 'lax', path: '/', maxAge })
   }
   return res
 }
