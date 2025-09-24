@@ -7,8 +7,8 @@ import Navbar from '@/components/site/Navbar'
 import { ThemeProvider } from '@/components/theme-provider'
 
 export const metadata: Metadata = {
-  title: 'v0 App',
-  description: 'Created with v0',
+  title: 'MusicNomad',
+  description: 'Move and Synchronise your playlists for free',
   generator: 'v0.app',
 }
 
