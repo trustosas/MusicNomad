@@ -80,10 +80,10 @@ export default function ActionPage() {
 
   const fetchPlaylistDetails = async (token: string, playlistId: string) => {
     if (playlistId === 'liked_songs') return { id: 'liked_songs', name: 'Liked Songs', description: '' } as any
-    const url = `https://api.spotify.com/v1/playlists/${encodeURIComponent(playlistId)}?fields=id,name,description,images(total,height,width,url)`
+    const url = `https://api.spotify.com/v1/playlists/${encodeURIComponent(playlistId)}?fields=id,name,description,images(total,height,width,url),owner(id,display_name)`
     const res = await fetch(url, { headers: { Authorization: `Bearer ${token}` }, cache: 'no-store' })
     if (!res.ok) throw new Error('Failed to get playlist details')
-    return res.json() as Promise<{ id: string; name: string; description?: string; images?: { url: string; width?: number; height?: number }[] }>
+    return res.json() as Promise<{ id: string; name: string; description?: string; images?: { url: string; width?: number; height?: number }[]; owner?: { id?: string; display_name?: string } }>
   }
 
   const fetchPlaylistTrackUris = async (token: string, playlistId: string): Promise<string[]> => {
@@ -380,6 +380,29 @@ export default function ActionPage() {
           updateItem(setJob, item.id, { status: 'running', error: undefined, message: undefined, added: 0, total: 0 })
           logAppend(setJob, `Reading playlist: ${item.name}`)
           const details = await fetchPlaylistDetails(sourceToken, item.id)
+
+          const ownerId = (details as any)?.owner?.id as string | undefined
+          const srcUserId = spotifySourceUser?.id || null
+          if (ownerId && srcUserId && ownerId !== srcUserId && destination === 'spotify') {
+            try {
+              logAppend(setJob, `Adding playlist to destination library: ${details.name}`)
+              const followRes = await fetch(`https://api.spotify.com/v1/playlists/${encodeURIComponent(item.id)}/followers`, {
+                method: 'PUT',
+                headers: { Authorization: `Bearer ${destToken}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify({ public: false })
+              })
+              if (followRes.ok) {
+                updateItem(setJob, item.id, { status: 'completed', total: 0, added: 0, message: undefined })
+                logAppend(setJob, `Added to library: ${details.name}`)
+                continue
+              } else {
+                logAppend(setJob, `Follow failed (status ${followRes.status}). Creating a copy instead...`)
+              }
+            } catch {
+              logAppend(setJob, 'Follow failed. Creating a copy instead...')
+            }
+          }
+
           const uris = await fetchPlaylistTrackUris(sourceToken, item.id)
           updateItem(setJob, item.id, { total: uris.length })
           logAppend(setJob, `Found ${uris.length} tracks`)
@@ -389,7 +412,7 @@ export default function ActionPage() {
           await setPlaylistCover(destToken, created.id, coverUrl)
           logAppend(setJob, 'Adding tracks...')
           await addTracksInBatches(destToken, created.id, uris, (added) => {
-            updateItem(setJob, item.id, (prev => ({})) as any) // noop to ensure type
+            updateItem(setJob, item.id, (prev => ({})) as any)
             setJob((prev) => {
               if (!prev) return prev
               const nextItems = prev.items.map((it) => it.playlistId === item.id ? { ...it, added: it.added + added, message: `${it.added + added}/${it.total}` } : it)
