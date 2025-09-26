@@ -78,10 +78,10 @@ async function fetchPlaylistDetails(token: string, playlistId: string) {
   if (playlistId === 'liked_songs') {
     return { id: 'liked_songs', name: 'Liked Songs', description: '' }
   }
-  const url = `https://api.spotify.com/v1/playlists/${encodeURIComponent(playlistId)}?fields=id,name,description,images(total,height,width,url)`
+  const url = `https://api.spotify.com/v1/playlists/${encodeURIComponent(playlistId)}?fields=id,name,description,images(total,height,width,url),owner(id,display_name)`
   const res = await fetch(url, { headers: { Authorization: `Bearer ${token}` }, cache: 'no-store' })
   if (!res.ok) throw new Error('Failed to get playlist details')
-  return res.json() as Promise<{ id: string; name: string; description?: string; images?: { url: string; width?: number; height?: number }[] }>
+  return res.json() as Promise<{ id: string; name: string; description?: string; images?: { url: string; width?: number; height?: number }[]; owner?: { id?: string; display_name?: string } }>
 }
 
 async function fetchPlaylistTrackUris(token: string, playlistId: string): Promise<string[]> {
@@ -255,6 +255,7 @@ async function runSpotifyToSpotify(job: TransferJobState, input: StartTransferIn
     return
   }
 
+  const sourceUser = await spotifyMe(sourceToken)
   await spotifyMe(destToken)
 
   for (const item of job.items) {
@@ -262,12 +263,35 @@ async function runSpotifyToSpotify(job: TransferJobState, input: StartTransferIn
       item.status = 'running'
       log(job, `Reading playlist: ${item.playlistName}`)
       const details = await fetchPlaylistDetails(sourceToken, item.playlistId)
+
+      const ownerId = (details as any)?.owner?.id as string | undefined
+      if (ownerId && ownerId !== sourceUser.id) {
+        try {
+          log(job, `Following external playlist in destination: ${details.name}`)
+          const followRes = await fetch(`https://api.spotify.com/v1/playlists/${encodeURIComponent(item.playlistId)}/followers`, {
+            method: 'PUT',
+            headers: { Authorization: `Bearer ${destToken}`, 'Content-Type': 'application/json' },
+            body: JSON.stringify({ public: false })
+          })
+          if (followRes.ok) {
+            item.status = 'completed'
+            item.total = 0
+            item.added = 0
+            item.message = undefined
+            log(job, `Added to destination library: ${details.name}`)
+            continue
+          } else {
+            log(job, `Follow failed (status ${followRes.status}). Falling back to copy...`)
+          }
+        } catch { log(job, 'Follow failed. Falling back to copy...') }
+      }
+
       const uris = await fetchPlaylistTrackUris(sourceToken, item.playlistId)
       item.total = uris.length
       log(job, `Found ${uris.length} tracks`)
       log(job, `Creating destination playlist: ${details.name}`)
-      const created = await createDestinationPlaylist(destToken, details.name, details.description)
-      const coverUrl = details && (details as any).images && Array.isArray((details as any).images) && (details as any).images[0]?.url
+      const created = await createDestinationPlaylist(destToken, details.name, (details as any).description)
+      const coverUrl = (details as any)?.images?.[0]?.url as string | undefined
       await setPlaylistCover(destToken, created.id, coverUrl)
       log(job, `Adding tracks...`)
       await addTracksInBatches(destToken, created.id, uris, (added) => { item.added += added; item.message = `${item.added}/${item.total}` })
