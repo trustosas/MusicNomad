@@ -50,12 +50,36 @@ export async function GET(request: Request) {
     nextUrl = data.next
   }
 
-  const playlists = items.map((p) => ({
-    id: p.id as string,
-    name: p.name as string,
-    tracks_total: p.tracks?.total as number | undefined,
-    image: Array.isArray(p.images) && p.images.length > 0 ? { url: p.images[0].url as string, width: p.images[0].width as number | undefined, height: p.images[0].height as number | undefined } : null,
-  }))
+  const meRes = await fetch('https://api.spotify.com/v1/me', {
+    headers: { Authorization: `Bearer ${accessToken}` },
+    cache: 'no-store',
+  })
+
+  let userId: string | undefined
+  if (meRes.ok) {
+    const me = await meRes.json()
+    userId = me.id
+  }
+
+  const playlists = items
+    .map((p) => ({
+      id: p.id as string,
+      name: p.name as string,
+      tracks_total: p.tracks?.total as number | undefined,
+      owner_id: p.owner?.id as string | undefined,
+      image:
+        Array.isArray(p.images) && p.images.length > 0
+          ? {
+              url: p.images[0].url as string,
+              width: p.images[0].width as number | undefined,
+              height: p.images[0].height as number | undefined,
+            }
+          : null,
+    }))
+    .filter((p) => {
+      if (!userId) return true
+      return p.owner_id === userId || p.owner_id === 'spotify'
+    })
 
   let likedTotal: number | undefined
   try {
