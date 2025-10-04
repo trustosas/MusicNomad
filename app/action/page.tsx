@@ -10,7 +10,7 @@ import { useState, useEffect, useLayoutEffect } from 'react'
 export const dynamic = 'force-static'
 
 
-type SpotifyPlaylist = { id: string; name: string; tracks_total?: number; image: { url: string; width?: number; height?: number } | null }
+type SpotifyPlaylist = { id: string; name: string; tracks_total?: number; image: { url: string; width?: number; height?: number } | null; owner: { id: string; display_name?: string } | null }
 
 type ServiceId = 'spotify' | 'apple' | 'youtube' | 'tidal' | 'deezer' | 'amazon'
 
@@ -383,7 +383,7 @@ export default function ActionPage() {
 
           const ownerId = (details as any)?.owner?.id as string | undefined
           const srcUserId = spotifySourceUser?.id || null
-          if (ownerId && srcUserId && ownerId !== srcUserId && destination === 'spotify') {
+          if (ownerId && srcUserId && ownerId !== srcUserId) {
             try {
               logAppend(setJob, `Adding playlist to destination library: ${details.name}`)
               const followRes = await fetch(`https://api.spotify.com/v1/playlists/${encodeURIComponent(item.id)}/followers`, {
